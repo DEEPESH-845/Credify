@@ -56,11 +56,13 @@ function TestConsumer() {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const windowAny = window as any;
+
 describe("WalletProvider", () => {
   beforeEach(() => {
     localStorage.clear();
-    // Reset window.ethereum
-    delete (window as Record<string, unknown>).ethereum;
+    delete windowAny.ethereum;
   });
 
   it("renders children and provides default context values", () => {
@@ -98,7 +100,7 @@ describe("WalletProvider", () => {
       code: 4001,
     });
 
-    (window as Record<string, unknown>).ethereum = {
+    windowAny.ethereum = {
       isMetaMask: true,
       request: jest.fn().mockRejectedValue(rejectionError),
       on: jest.fn(),
@@ -183,7 +185,7 @@ describe("WalletProvider", () => {
   it("connects wallet successfully when MetaMask is available", async () => {
     const mockAddress = "0x1234567890abcdef1234567890abcdef12345678";
 
-    (window as Record<string, unknown>).ethereum = {
+    windowAny.ethereum = {
       isMetaMask: true,
       request: jest.fn().mockResolvedValue([mockAddress]),
       on: jest.fn(),
@@ -195,9 +197,11 @@ describe("WalletProvider", () => {
       getAddress: jest.fn().mockResolvedValue(mockAddress),
     };
 
-    jest.spyOn(require("ethers"), "BrowserProvider").mockImplementation(() => ({
-      getSigner: jest.fn().mockResolvedValue(mockSigner),
-    }));
+    jest
+      .spyOn(require("ethers"), "BrowserProvider")
+      .mockImplementation(() => ({
+        getSigner: jest.fn().mockResolvedValue(mockSigner),
+      }));
 
     render(
       <WalletProvider>

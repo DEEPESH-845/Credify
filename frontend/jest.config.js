@@ -5,7 +5,14 @@ const config = {
     "^.+\\.tsx?$": [
       "ts-jest",
       {
-        tsconfig: "tsconfig.json",
+        tsconfig: {
+          jsx: "react-jsx",
+          esModuleInterop: true,
+          module: "commonjs",
+          moduleResolution: "node",
+          resolveJsonModule: true,
+          paths: { "@/*": ["./src/*"] },
+        },
       },
     ],
   },
