@@ -186,4 +186,105 @@ export async function uploadProfileImage(
   return res.json() as Promise<ProfileData>;
 }
 
+/**
+ * Connection data returned by the backend API.
+ */
+export interface ConnectionData {
+  id: number;
+  requester_address: string;
+  recipient_address: string;
+  status: "pending" | "accepted" | "declined";
+  created_at: string;
+  updated_at: string;
+  profile?: {
+    wallet_address: string;
+    display_name: string | null;
+    headline: string | null;
+    profile_image_cid: string | null;
+  };
+}
+
+/**
+ * Paginated connections response from the backend.
+ */
+export interface ConnectionsResponse {
+  connections: ConnectionData[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/**
+ * Fetch paginated list of accepted connections.
+ */
+export async function getConnections(
+  jwt: string,
+  page: number = 1,
+  limit: number = 20
+): Promise<ConnectionsResponse> {
+  return request<ConnectionsResponse>(
+    `/api/connections?page=${page}&limit=${limit}`,
+    { method: "GET" },
+    jwt
+  );
+}
+
+/**
+ * Fetch pending connection requests for the current user.
+ */
+export async function getPendingConnections(
+  jwt: string
+): Promise<ConnectionsResponse> {
+  return request<ConnectionsResponse>(
+    `/api/connections?status=pending`,
+    { method: "GET" },
+    jwt
+  );
+}
+
+/**
+ * Send a connection request to another user by wallet address.
+ */
+export async function sendConnectionRequest(
+  recipientAddress: string,
+  jwt: string
+): Promise<ConnectionData> {
+  return request<ConnectionData>(
+    "/api/connections/request",
+    {
+      method: "POST",
+      body: JSON.stringify({ recipient_address: recipientAddress }),
+    },
+    jwt
+  );
+}
+
+/**
+ * Accept a pending connection request.
+ */
+export async function acceptConnection(
+  connectionId: number,
+  jwt: string
+): Promise<ConnectionData> {
+  return request<ConnectionData>(
+    `/api/connections/${connectionId}/accept`,
+    { method: "PUT" },
+    jwt
+  );
+}
+
+/**
+ * Decline a pending connection request.
+ */
+export async function declineConnection(
+  connectionId: number,
+  jwt: string
+): Promise<ConnectionData> {
+  return request<ConnectionData>(
+    `/api/connections/${connectionId}/decline`,
+    { method: "PUT" },
+    jwt
+  );
+}
+
 export { request, API_BASE_URL };
