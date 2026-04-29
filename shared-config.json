@@ -1,0 +1,10 @@
+{
+  "contracts": {
+    "credentialNFT": "",
+    "reputationToken": ""
+  },
+  "network": {
+    "chainId": 31337,
+    "name": "localhost"
+  }
+}
