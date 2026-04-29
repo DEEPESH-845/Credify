@@ -353,4 +353,46 @@ export async function deletePost(
   );
 }
 
+/**
+ * Upload a file to IPFS via the backend.
+ * Returns the IPFS CID on success.
+ */
+export async function uploadFile(
+  file: File,
+  jwt: string
+): Promise<{ cid: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const headers: Record<string, string> = {};
+  if (jwt) {
+    headers["Authorization"] = `Bearer ${jwt}`;
+  }
+
+  const res = await fetch(`${API_BASE_URL}/api/ipfs/upload`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!res.ok) {
+    let code = "UNKNOWN_ERROR";
+    let message = `Request failed with status ${res.status}`;
+
+    try {
+      const body = await res.json();
+      if (body.error) {
+        code = body.error.code || code;
+        message = body.error.message || message;
+      }
+    } catch {
+      // Response body wasn't JSON — use defaults
+    }
+
+    throw new ApiRequestError(res.status, code, message);
+  }
+
+  return res.json() as Promise<{ cid: string }>;
+}
+
 export { request, API_BASE_URL };
