@@ -2,6 +2,7 @@ import express from "express";
 import { sanitizeMiddleware } from "./middleware/sanitize";
 import { authRateLimiter } from "./middleware/rateLimiter";
 import authRoutes from "./routes/auth";
+import profileRoutes from "./routes/profiles";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,6 +16,9 @@ app.get("/health", (_req, res) => {
 
 // Auth routes with rate limiting
 app.use("/api/auth", authRateLimiter, authRoutes);
+
+// Profile routes
+app.use("/api/profiles", profileRoutes);
 
 app.listen(PORT, () => {
   console.log(`Backend server running on port ${PORT}`);
