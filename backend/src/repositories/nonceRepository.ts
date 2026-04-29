@@ -23,6 +23,17 @@ export async function findByAddress(
   return result.rows[0] ?? null;
 }
 
+export async function findByAddressAndNonce(
+  walletAddress: string,
+  nonce: string
+): Promise<Nonce | null> {
+  const result = await pool.query(
+    `SELECT * FROM nonces WHERE wallet_address = $1 AND nonce = $2 ORDER BY created_at DESC LIMIT 1`,
+    [walletAddress, nonce]
+  );
+  return result.rows[0] ?? null;
+}
+
 export async function deleteById(id: number): Promise<void> {
   await pool.query(`DELETE FROM nonces WHERE id = $1`, [id]);
 }
