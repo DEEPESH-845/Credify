@@ -6,6 +6,7 @@ import profileRoutes from "./routes/profiles";
 import connectionRoutes from "./routes/connections";
 import postRoutes from "./routes/posts";
 import feedRoutes from "./routes/feed";
+import ipfsRoutes from "./routes/ipfs";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -31,6 +32,9 @@ app.use("/api/posts", postRoutes);
 
 // Feed routes
 app.use("/api/feed", feedRoutes);
+
+// IPFS routes
+app.use("/api/ipfs", ipfsRoutes);
 
 app.listen(PORT, () => {
   console.log(`Backend server running on port ${PORT}`);

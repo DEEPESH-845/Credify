@@ -84,3 +84,54 @@ export async function uploadImage(
 
   return uploadToIPFS(buffer, mimeType);
 }
+
+/** In-memory store for stub implementation (maps CID → { buffer, mimeType }). */
+const ipfsStore = new Map<string, { buffer: Buffer; mimeType: string }>();
+
+/**
+ * Upload a buffer to IPFS and store it for later retrieval.
+ * Returns the resulting CID.
+ *
+ * This wraps `uploadToIPFS` and additionally persists the content in the
+ * in-memory store so that `retrieveFromIPFS` can return it.
+ *
+ * @param buffer   File contents
+ * @param mimeType MIME type of the file
+ * @returns The IPFS content identifier (CID)
+ */
+export async function uploadAndStore(
+  buffer: Buffer,
+  mimeType: string
+): Promise<string> {
+  const cid = await uploadToIPFS(buffer, mimeType);
+  ipfsStore.set(cid, { buffer, mimeType });
+  return cid;
+}
+
+export class CIDNotFoundError extends Error {
+  code = "NOT_FOUND";
+  constructor(cid: string) {
+    super(`Content not found for CID: ${cid}`);
+  }
+}
+
+/**
+ * Retrieve file content from IPFS by CID.
+ *
+ * @param cid The IPFS content identifier
+ * @returns An object containing the file buffer and its MIME type
+ */
+export async function retrieveFromIPFS(
+  cid: string
+): Promise<{ buffer: Buffer; mimeType: string }> {
+  const entry = ipfsStore.get(cid);
+  if (!entry) {
+    throw new CIDNotFoundError(cid);
+  }
+  return entry;
+}
+
+/** Exposed for testing — clears the in-memory IPFS store. */
+export function _clearStore(): void {
+  ipfsStore.clear();
+}
