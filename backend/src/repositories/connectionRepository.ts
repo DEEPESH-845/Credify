@@ -12,6 +12,27 @@ export async function create(
   return result.rows[0];
 }
 
+export async function findById(id: number): Promise<Connection | null> {
+  const result = await pool.query(
+    `SELECT * FROM connections WHERE id = $1`,
+    [id]
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function findExisting(
+  addressA: string,
+  addressB: string
+): Promise<Connection | null> {
+  const result = await pool.query(
+    `SELECT * FROM connections
+     WHERE (requester_address = $1 AND recipient_address = $2)
+        OR (requester_address = $2 AND recipient_address = $1)`,
+    [addressA, addressB]
+  );
+  return result.rows[0] ?? null;
+}
+
 export async function updateStatus(
   id: number,
   status: "accepted" | "declined"
