@@ -1,6 +1,7 @@
 import express from "express";
 import { sanitizeMiddleware } from "./middleware/sanitize";
 import { authRateLimiter } from "./middleware/rateLimiter";
+import { globalErrorHandler } from "./middleware/errorHandler";
 import authRoutes from "./routes/auth";
 import profileRoutes from "./routes/profiles";
 import connectionRoutes from "./routes/connections";
@@ -35,6 +36,9 @@ app.use("/api/feed", feedRoutes);
 
 // IPFS routes
 app.use("/api/ipfs", ipfsRoutes);
+
+// Global error handler — must be registered AFTER all routes
+app.use(globalErrorHandler);
 
 app.listen(PORT, () => {
   console.log(`Backend server running on port ${PORT}`);

@@ -136,7 +136,7 @@ router.get(
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-      const { cid } = req.params;
+      const cid = req.params.cid as string;
 
       const { buffer, mimeType } = await retrieveFromIPFS(cid);
 
