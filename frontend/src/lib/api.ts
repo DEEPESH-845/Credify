@@ -287,4 +287,70 @@ export async function declineConnection(
   );
 }
 
+/**
+ * Post data returned by the backend API.
+ */
+export interface PostData {
+  id: number;
+  author_address: string;
+  content: string;
+  created_at: string;
+}
+
+/**
+ * Paginated feed response from the backend.
+ */
+export interface FeedResponse {
+  posts: PostData[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/**
+ * Fetch paginated feed of posts (reverse-chronological).
+ */
+export async function getFeed(
+  jwt: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<FeedResponse> {
+  return request<FeedResponse>(
+    `/api/feed?page=${page}&limit=${limit}`,
+    { method: "GET" },
+    jwt
+  );
+}
+
+/**
+ * Create a new post.
+ */
+export async function createPost(
+  content: string,
+  jwt: string
+): Promise<PostData> {
+  return request<PostData>(
+    "/api/posts",
+    {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    },
+    jwt
+  );
+}
+
+/**
+ * Delete a post by ID.
+ */
+export async function deletePost(
+  postId: number,
+  jwt: string
+): Promise<void> {
+  return request<void>(
+    `/api/posts/${postId}`,
+    { method: "DELETE" },
+    jwt
+  );
+}
+
 export { request, API_BASE_URL };
