@@ -395,3 +395,199 @@ describe("PUT /api/profiles/:address", () => {
     expect(res.body.error.code).toBe("INTERNAL_ERROR");
   });
 });
+
+// --- Mock the IPFS service ---
+jest.mock("../src/services/ipfsService", () => {
+  const actual = jest.requireActual("../src/services/ipfsService");
+  return {
+    ...actual,
+    uploadImage: jest.fn(),
+    uploadToIPFS: jest.fn(),
+  };
+});
+
+import * as ipfsService from "../src/services/ipfsService";
+
+const mockedIpfsService = ipfsService as jest.Mocked<typeof ipfsService>;
+
+describe("POST /api/profiles/:address/image", () => {
+  let app: Express;
+  const ownerToken = generateToken(OWNER_ADDRESS);
+  const otherToken = generateToken(OTHER_ADDRESS);
+
+  beforeEach(() => {
+    app = createApp();
+    jest.clearAllMocks();
+  });
+
+  it("should upload a JPEG image and return the CID", async () => {
+    const existingUser = makeUser();
+    const updatedUser = makeUser({ profile_image_cid: "QmFakeCid123" });
+    mockedUserRepo.findByAddress.mockResolvedValue(existingUser);
+    mockedUserRepo.update.mockResolvedValue(updatedUser);
+    mockedIpfsService.uploadImage.mockResolvedValue("QmFakeCid123");
+
+    const res = await request(app)
+      .post(`/api/profiles/${OWNER_ADDRESS}/image`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .attach("image", Buffer.from("fake-jpeg-data"), {
+        filename: "photo.jpg",
+        contentType: "image/jpeg",
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.cid).toBe("QmFakeCid123");
+    expect(res.body.profile.profile_image_cid).toBe("QmFakeCid123");
+    expect(mockedIpfsService.uploadImage).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      "image/jpeg"
+    );
+    expect(mockedUserRepo.update).toHaveBeenCalledWith(
+      OWNER_ADDRESS.toLowerCase(),
+      { profile_image_cid: "QmFakeCid123" }
+    );
+  });
+
+  it("should upload a PNG image and return the CID", async () => {
+    const existingUser = makeUser();
+    const updatedUser = makeUser({ profile_image_cid: "QmPngCid456" });
+    mockedUserRepo.findByAddress.mockResolvedValue(existingUser);
+    mockedUserRepo.update.mockResolvedValue(updatedUser);
+    mockedIpfsService.uploadImage.mockResolvedValue("QmPngCid456");
+
+    const res = await request(app)
+      .post(`/api/profiles/${OWNER_ADDRESS}/image`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .attach("image", Buffer.from("fake-png-data"), {
+        filename: "photo.png",
+        contentType: "image/png",
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.cid).toBe("QmPngCid456");
+  });
+
+  it("should return 403 when uploading to another user's profile", async () => {
+    mockedIpfsService.uploadImage.mockResolvedValue("QmShouldNotReach");
+
+    const res = await request(app)
+      .post(`/api/profiles/${OTHER_ADDRESS}/image`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .attach("image", Buffer.from("fake-jpeg-data"), {
+        filename: "photo.jpg",
+        contentType: "image/jpeg",
+      });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe("FORBIDDEN");
+    expect(mockedIpfsService.uploadImage).not.toHaveBeenCalled();
+  });
+
+  it("should return 401 without authentication", async () => {
+    const res = await request(app)
+      .post(`/api/profiles/${OWNER_ADDRESS}/image`)
+      .attach("image", Buffer.from("fake-jpeg-data"), {
+        filename: "photo.jpg",
+        contentType: "image/jpeg",
+      });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("should return 400 when no file is provided", async () => {
+    const res = await request(app)
+      .post(`/api/profiles/${OWNER_ADDRESS}/image`)
+      .set("Authorization", `Bearer ${ownerToken}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("VALIDATION_ERROR");
+    expect(res.body.error.message).toContain("No image file provided");
+  });
+
+  it("should return 415 for unsupported file type", async () => {
+    mockedUserRepo.findByAddress.mockResolvedValue(makeUser());
+    mockedIpfsService.uploadImage.mockRejectedValue(
+      new ipfsService.UnsupportedFileTypeError(ipfsService.ALLOWED_IMAGE_TYPES)
+    );
+
+    const res = await request(app)
+      .post(`/api/profiles/${OWNER_ADDRESS}/image`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .attach("image", Buffer.from("fake-gif-data"), {
+        filename: "animation.gif",
+        contentType: "image/gif",
+      });
+
+    expect(res.status).toBe(415);
+    expect(res.body.error.code).toBe("UNSUPPORTED_FILE_TYPE");
+  });
+
+  it("should return 413 when file exceeds maximum size via IPFS service", async () => {
+    mockedUserRepo.findByAddress.mockResolvedValue(makeUser());
+    mockedIpfsService.uploadImage.mockRejectedValue(
+      new ipfsService.FileTooLargeError(ipfsService.MAX_FILE_SIZE)
+    );
+
+    const res = await request(app)
+      .post(`/api/profiles/${OWNER_ADDRESS}/image`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .attach("image", Buffer.from("large-data"), {
+        filename: "big.jpg",
+        contentType: "image/jpeg",
+      });
+
+    expect(res.status).toBe(413);
+    expect(res.body.error.code).toBe("FILE_TOO_LARGE");
+  });
+
+  it("should return 404 when profile does not exist", async () => {
+    mockedUserRepo.findByAddress.mockResolvedValue(null);
+    mockedIpfsService.uploadImage.mockResolvedValue("QmShouldNotReach");
+
+    const res = await request(app)
+      .post(`/api/profiles/${OWNER_ADDRESS}/image`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .attach("image", Buffer.from("fake-jpeg-data"), {
+        filename: "photo.jpg",
+        contentType: "image/jpeg",
+      });
+
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe("NOT_FOUND");
+  });
+
+  it("should return 500 when repository throws an unexpected error", async () => {
+    mockedUserRepo.findByAddress.mockRejectedValue(new Error("DB error"));
+
+    const res = await request(app)
+      .post(`/api/profiles/${OWNER_ADDRESS}/image`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .attach("image", Buffer.from("fake-jpeg-data"), {
+        filename: "photo.jpg",
+        contentType: "image/jpeg",
+      });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe("INTERNAL_ERROR");
+  });
+
+  it("should handle case-insensitive address comparison for ownership", async () => {
+    const upperAddress = OWNER_ADDRESS.toUpperCase().replace("0X", "0x");
+    const existingUser = makeUser();
+    const updatedUser = makeUser({ profile_image_cid: "QmCaseCid" });
+    mockedUserRepo.findByAddress.mockResolvedValue(existingUser);
+    mockedUserRepo.update.mockResolvedValue(updatedUser);
+    mockedIpfsService.uploadImage.mockResolvedValue("QmCaseCid");
+
+    const res = await request(app)
+      .post(`/api/profiles/${upperAddress}/image`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .attach("image", Buffer.from("fake-jpeg-data"), {
+        filename: "photo.jpg",
+        contentType: "image/jpeg",
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.cid).toBe("QmCaseCid");
+  });
+});

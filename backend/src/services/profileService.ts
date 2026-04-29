@@ -1,4 +1,5 @@
 import * as userRepository from "../repositories/userRepository";
+import * as ipfsService from "./ipfsService";
 import { User, UpdateUserData } from "../types/models";
 
 export interface CreateProfileData {
@@ -76,4 +77,46 @@ export async function updateProfile(
 
   const updated = await userRepository.update(normalizedProfile, data);
   return updated ?? existing;
+}
+
+/**
+ * Uploads a profile image to IPFS and stores the CID on the user's profile.
+ *
+ * Enforces ownership — the requester's address must match the profile address.
+ * Throws with code FORBIDDEN if the requester is not the profile owner.
+ * Throws with code NOT_FOUND if the profile does not exist.
+ *
+ * @returns The IPFS CID of the uploaded image.
+ */
+export async function uploadProfileImage(
+  profileAddress: string,
+  requesterAddress: string,
+  fileBuffer: Buffer,
+  mimeType: string
+): Promise<{ cid: string; profile: User }> {
+  const normalizedProfile = profileAddress.toLowerCase();
+  const normalizedRequester = requesterAddress.toLowerCase();
+
+  if (normalizedProfile !== normalizedRequester) {
+    const error = new Error("You can only upload an image to your own profile");
+    (error as any).code = "FORBIDDEN";
+    throw error;
+  }
+
+  const existing = await userRepository.findByAddress(normalizedProfile);
+  if (!existing) {
+    const error = new Error("Profile not found");
+    (error as any).code = "NOT_FOUND";
+    throw error;
+  }
+
+  // Delegate to IPFS service — this may throw FileTooLargeError or UnsupportedFileTypeError
+  const cid = await ipfsService.uploadImage(fileBuffer, mimeType);
+
+  // Store the CID on the profile
+  const updated = await userRepository.update(normalizedProfile, {
+    profile_image_cid: cid,
+  });
+
+  return { cid, profile: updated ?? existing };
 }
