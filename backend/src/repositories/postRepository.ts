@@ -12,6 +12,14 @@ export async function create(
   return result.rows[0];
 }
 
+export async function findById(id: number): Promise<Post | null> {
+  const result = await pool.query(
+    `SELECT * FROM posts WHERE id = $1`,
+    [id]
+  );
+  return result.rows[0] ?? null;
+}
+
 export async function deleteById(id: number): Promise<boolean> {
   const result = await pool.query(
     `DELETE FROM posts WHERE id = $1`,
