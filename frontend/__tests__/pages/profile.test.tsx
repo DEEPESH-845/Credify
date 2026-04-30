@@ -42,6 +42,18 @@ jest.mock("@/contexts/WalletContext", () => ({
   useWallet: () => mockWalletState,
 }));
 
+// Mock TransactionContext
+jest.mock("@/contexts/TransactionContext", () => ({
+  useTransactionToast: () => ({
+    showLoading: jest.fn().mockReturnValue("toast-1"),
+    showSuccess: jest.fn().mockReturnValue("toast-2"),
+    showError: jest.fn().mockReturnValue("toast-3"),
+    updateToast: jest.fn(),
+    dismissToast: jest.fn(),
+    dismissAll: jest.fn(),
+  }),
+}));
+
 import ProfilePage from "@/app/profile/[address]/page";
 
 const sampleProfile = {

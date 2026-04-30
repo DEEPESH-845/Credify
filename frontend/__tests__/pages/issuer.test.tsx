@@ -24,6 +24,25 @@ jest.mock("@/contexts/WalletContext", () => ({
   useWallet: () => mockWalletState,
 }));
 
+// Mock TransactionContext
+const mockShowLoading = jest.fn().mockReturnValue("toast-1");
+const mockShowSuccess = jest.fn().mockReturnValue("toast-2");
+const mockShowError = jest.fn().mockReturnValue("toast-3");
+const mockUpdateToast = jest.fn();
+const mockDismissToast = jest.fn();
+const mockDismissAll = jest.fn();
+
+jest.mock("@/contexts/TransactionContext", () => ({
+  useTransactionToast: () => ({
+    showLoading: mockShowLoading,
+    showSuccess: mockShowSuccess,
+    showError: mockShowError,
+    updateToast: mockUpdateToast,
+    dismissToast: mockDismissToast,
+    dismissAll: mockDismissAll,
+  }),
+}));
+
 // Mock api module
 const mockUploadFile = jest.fn();
 jest.mock("@/lib/api", () => ({

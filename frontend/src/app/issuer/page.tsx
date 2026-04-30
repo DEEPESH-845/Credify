@@ -3,14 +3,8 @@
 import { useState, useCallback } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { uploadFile, ApiRequestError } from "@/lib/api";
-
-type IssueStep =
-  | "idle"
-  | "uploading"
-  | "minting"
-  | "confirming"
-  | "success"
-  | "error";
+import { useTransaction } from "@/hooks/useTransaction";
+import TransactionStatus from "@/components/TransactionStatus";
 
 interface MintResult {
   tokenId: string;
@@ -19,106 +13,90 @@ interface MintResult {
   ipfsCID: string;
 }
 
-/**
- * Parse a human-readable revert reason from a contract transaction error.
- */
-function parseRevertReason(err: unknown): string {
-  if (err instanceof Error) {
-    const message = err.message;
-
-    // ethers.js v6 wraps revert reasons in the error message
-    const revertMatch = message.match(/reason="([^"]+)"/);
-    if (revertMatch) return revertMatch[1];
-
-    // Some providers include the revert string directly
-    const revertStringMatch = message.match(/reverted with reason string '([^']+)'/);
-    if (revertStringMatch) return revertStringMatch[1];
-
-    // Check for user rejection
-    if (
-      ("code" in err && (err as { code: number }).code === 4001) ||
-      ("code" in err && (err as { code: string }).code === "ACTION_REJECTED")
-    ) {
-      return "Transaction was rejected in your wallet.";
-    }
-
-    return message;
-  }
-  return "An unexpected error occurred during the transaction.";
-}
-
 export default function IssuerDashboardPage() {
   const { address, jwt, credentialNFT } = useWallet();
 
   const [holderAddress, setHolderAddress] = useState("");
   const [credentialType, setCredentialType] = useState("");
   const [documentFile, setDocumentFile] = useState<File | null>(null);
-  const [step, setStep] = useState<IssueStep>("idle");
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<MintResult | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const tx = useTransaction<MintResult>({
+    pendingMessage: "Issuing credential on blockchain...",
+    successMessage: "Credential issued successfully!",
+  });
 
   const resetForm = useCallback(() => {
     setHolderAddress("");
     setCredentialType("");
     setDocumentFile(null);
-    setStep("idle");
-    setError(null);
-    setResult(null);
-  }, []);
+    setStatusMessage(null);
+    setValidationError(null);
+    tx.reset();
+  }, [tx]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      setError(null);
-      setResult(null);
+      setValidationError(null);
 
       // Validate inputs
       if (!address || !jwt) {
-        setError("Please connect your wallet and authenticate first.");
+        setValidationError("Please connect your wallet and authenticate first.");
         return;
       }
 
       if (!credentialNFT) {
-        setError("Smart contract is not available. Please check your network connection.");
+        setValidationError("Smart contract is not available. Please check your network connection.");
         return;
       }
 
       if (!holderAddress.trim()) {
-        setError("Holder wallet address is required.");
+        setValidationError("Holder wallet address is required.");
         return;
       }
 
       if (!/^0x[a-fA-F0-9]{40}$/.test(holderAddress.trim())) {
-        setError("Invalid holder wallet address. Must be a valid Ethereum address.");
+        setValidationError("Invalid holder wallet address. Must be a valid Ethereum address.");
         return;
       }
 
       if (!credentialType.trim()) {
-        setError("Credential type is required.");
+        setValidationError("Credential type is required.");
         return;
       }
 
       if (!documentFile) {
-        setError("Please select a credential document (PDF) to upload.");
+        setValidationError("Please select a credential document (PDF) to upload.");
         return;
       }
 
-      try {
+      await tx.execute(async () => {
         // Step 1: Upload document to IPFS
-        setStep("uploading");
-        const { cid } = await uploadFile(documentFile, jwt);
+        setStatusMessage("Uploading document to IPFS...");
+        let cid: string;
+        try {
+          const uploadResult = await uploadFile(documentFile, jwt);
+          cid = uploadResult.cid;
+        } catch (err: unknown) {
+          if (err instanceof ApiRequestError) {
+            throw new Error(err.message);
+          }
+          throw err;
+        }
 
         // Step 2: Call mintCredential on the contract
-        setStep("minting");
-        const tx = await credentialNFT.mintCredential(
+        setStatusMessage("Submitting transaction to blockchain...");
+        const mintTx = await credentialNFT.mintCredential(
           holderAddress.trim(),
           credentialType.trim(),
           cid
         );
 
         // Step 3: Wait for transaction confirmation
-        setStep("confirming");
-        const receipt = await tx.wait();
+        setStatusMessage("Waiting for transaction confirmation...");
+        const receipt = await mintTx.wait();
 
         // Step 4: Parse the CredentialIssued event to get the token ID
         let tokenId = "unknown";
@@ -139,41 +117,20 @@ export default function IssuerDashboardPage() {
           }
         }
 
-        setResult({
+        setStatusMessage(null);
+        return {
           tokenId,
           holderAddress: holderAddress.trim(),
           credentialType: credentialType.trim(),
           ipfsCID: cid,
-        });
-        setStep("success");
-      } catch (err: unknown) {
-        setStep("error");
-
-        if (err instanceof ApiRequestError) {
-          setError(err.message);
-        } else {
-          setError(parseRevertReason(err));
-        }
-      }
+        };
+      });
     },
-    [address, jwt, credentialNFT, holderAddress, credentialType, documentFile]
+    [address, jwt, credentialNFT, holderAddress, credentialType, documentFile, tx]
   );
 
-  const isLoading =
-    step === "uploading" || step === "minting" || step === "confirming";
-
-  const statusMessage = (() => {
-    switch (step) {
-      case "uploading":
-        return "Uploading document to IPFS...";
-      case "minting":
-        return "Submitting transaction to blockchain...";
-      case "confirming":
-        return "Waiting for transaction confirmation...";
-      default:
-        return null;
-    }
-  })();
+  const isLoading = tx.isLoading;
+  const displayError = validationError || tx.error;
 
   return (
     <main className="min-h-screen bg-gray-50 p-6">
@@ -189,7 +146,7 @@ export default function IssuerDashboardPage() {
         </section>
 
         {/* Success confirmation */}
-        {step === "success" && result && (
+        {tx.step === "success" && tx.result && (
           <section
             role="status"
             aria-label="Success"
@@ -204,7 +161,7 @@ export default function IssuerDashboardPage() {
                   Token ID
                 </dt>
                 <dd className="mt-1 text-sm text-green-900">
-                  {result.tokenId}
+                  {tx.result.tokenId}
                 </dd>
               </div>
               <div>
@@ -212,7 +169,7 @@ export default function IssuerDashboardPage() {
                   Holder Address
                 </dt>
                 <dd className="mt-1 text-sm text-green-900 font-mono break-all">
-                  {result.holderAddress}
+                  {tx.result.holderAddress}
                 </dd>
               </div>
               <div>
@@ -220,7 +177,7 @@ export default function IssuerDashboardPage() {
                   Credential Type
                 </dt>
                 <dd className="mt-1 text-sm text-green-900">
-                  {result.credentialType}
+                  {tx.result.credentialType}
                 </dd>
               </div>
               <div>
@@ -228,7 +185,7 @@ export default function IssuerDashboardPage() {
                   IPFS CID
                 </dt>
                 <dd className="mt-1 text-sm text-green-900 font-mono break-all">
-                  {result.ipfsCID}
+                  {tx.result.ipfsCID}
                 </dd>
               </div>
             </dl>
@@ -242,31 +199,24 @@ export default function IssuerDashboardPage() {
         )}
 
         {/* Form */}
-        {step !== "success" && (
+        {tx.step !== "success" && (
           <section className="rounded-lg bg-white p-6 shadow-md">
             <h2 className="text-lg font-semibold text-gray-900">
               Issue New Credential
             </h2>
 
-            {error && (
+            {displayError && (
               <div
                 role="alert"
                 className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700"
               >
-                {error}
+                {displayError}
               </div>
             )}
 
-            {isLoading && (
-              <div className="mt-4 flex flex-col items-center gap-3">
-                <div
-                  className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"
-                  role="status"
-                  aria-label="Loading"
-                />
-                {statusMessage && (
-                  <p className="text-sm text-gray-600">{statusMessage}</p>
-                )}
+            {isLoading && statusMessage && (
+              <div className="mt-4">
+                <TransactionStatus message={statusMessage} />
               </div>
             )}
 

@@ -3,6 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useWallet } from "@/contexts/WalletContext";
+import { useTransactionToast } from "@/contexts/TransactionContext";
+import { parseTransactionError } from "@/lib/transaction-utils";
+import TransactionStatus from "@/components/TransactionStatus";
 
 interface CredentialData {
   credentialType: string;
@@ -28,13 +31,20 @@ export default function CredentialVerificationPage() {
   const params = useParams();
   const tokenId = params.tokenId as string;
   const { credentialNFT } = useWallet();
+  const toast = useTransactionToast();
 
   const [credential, setCredential] = useState<CredentialDisplay | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCredential = useCallback(async () => {
-    if (!credentialNFT || !tokenId) return;
+    if (!credentialNFT || !tokenId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
 
     try {
       const data: CredentialData = await credentialNFT.getCredential(
@@ -52,46 +62,35 @@ export default function CredentialVerificationPage() {
         ipfsCID: data.ipfsCID,
       });
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Failed to load credential data");
-      }
+      const parsed = parseTransactionError(err);
+      setError(parsed);
+
+      // Show toast with retry for network errors
+      const isNetworkError =
+        err instanceof Error &&
+        (("code" in err &&
+          ((err as { code: string }).code === "NETWORK_ERROR" ||
+            (err as { code: string }).code === "SERVER_ERROR")) ||
+          err.message.toLowerCase().includes("network error") ||
+          err.message.toLowerCase().includes("failed to fetch"));
+
+      toast.showError(
+        parsed,
+        isNetworkError ? () => fetchCredential() : undefined
+      );
+    } finally {
+      setLoading(false);
     }
-  }, [credentialNFT, tokenId]);
+  }, [credentialNFT, tokenId, toast]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      await fetchCredential();
-
-      if (!cancelled) {
-        setLoading(false);
-      }
-    }
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
+    fetchCredential();
   }, [fetchCredential]);
 
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-3">
-          <div
-            className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"
-            role="status"
-            aria-label="Loading"
-          />
-          <p className="text-sm text-gray-600">Loading credential...</p>
-        </div>
+        <TransactionStatus message="Verifying credential on blockchain..." />
       </main>
     );
   }
@@ -106,6 +105,12 @@ export default function CredentialVerificationPage() {
           >
             {error}
           </div>
+          <button
+            onClick={fetchCredential}
+            className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       </main>
     );

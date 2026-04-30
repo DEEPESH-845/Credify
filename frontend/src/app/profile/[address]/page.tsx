@@ -3,7 +3,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useWallet } from "@/contexts/WalletContext";
+import { useTransactionToast } from "@/contexts/TransactionContext";
+import { parseTransactionError } from "@/lib/transaction-utils";
 import { getProfile, ProfileData, ApiRequestError } from "@/lib/api";
+import TransactionStatus from "@/components/TransactionStatus";
 
 interface CredentialData {
   credentialType: string;
@@ -27,11 +30,13 @@ export default function ProfilePage() {
   const params = useParams();
   const profileAddress = params.address as string;
   const { jwt, credentialNFT, reputationToken } = useWallet();
+  const toast = useTransactionToast();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [credentials, setCredentials] = useState<CredentialDisplay[]>([]);
   const [reputationBalance, setReputationBalance] = useState<string>("0");
   const [loading, setLoading] = useState(true);
+  const [blockchainLoading, setBlockchainLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchProfile = useCallback(async () => {
@@ -70,10 +75,24 @@ export default function ProfilePage() {
       }
 
       setCredentials(credentialList);
-    } catch {
-      // Contract may not be deployed or address has no credentials — not a fatal error
+    } catch (err: unknown) {
+      const parsed = parseTransactionError(err);
+
+      // Show toast for blockchain read errors with retry
+      const isNetworkError =
+        err instanceof Error &&
+        (("code" in err &&
+          ((err as { code: string }).code === "NETWORK_ERROR" ||
+            (err as { code: string }).code === "SERVER_ERROR")) ||
+          err.message.toLowerCase().includes("network error") ||
+          err.message.toLowerCase().includes("failed to fetch"));
+
+      toast.showError(
+        `Failed to load credentials: ${parsed}`,
+        isNetworkError ? () => fetchCredentials() : undefined
+      );
     }
-  }, [credentialNFT, profileAddress]);
+  }, [credentialNFT, profileAddress, toast]);
 
   const fetchReputation = useCallback(async () => {
     if (!reputationToken || !profileAddress) return;
@@ -81,10 +100,23 @@ export default function ProfilePage() {
     try {
       const balance: bigint = await reputationToken.balanceOf(profileAddress);
       setReputationBalance(balance.toString());
-    } catch {
-      // Contract may not be deployed — not a fatal error
+    } catch (err: unknown) {
+      const parsed = parseTransactionError(err);
+
+      const isNetworkError =
+        err instanceof Error &&
+        (("code" in err &&
+          ((err as { code: string }).code === "NETWORK_ERROR" ||
+            (err as { code: string }).code === "SERVER_ERROR")) ||
+          err.message.toLowerCase().includes("network error") ||
+          err.message.toLowerCase().includes("failed to fetch"));
+
+      toast.showError(
+        `Failed to load reputation: ${parsed}`,
+        isNetworkError ? () => fetchReputation() : undefined
+      );
     }
-  }, [reputationToken, profileAddress]);
+  }, [reputationToken, profileAddress, toast]);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,10 +125,17 @@ export default function ProfilePage() {
       setLoading(true);
       setError(null);
 
-      await Promise.all([fetchProfile(), fetchCredentials(), fetchReputation()]);
+      await fetchProfile();
 
       if (!cancelled) {
         setLoading(false);
+      }
+
+      // Fetch blockchain data in parallel (non-blocking)
+      setBlockchainLoading(true);
+      await Promise.all([fetchCredentials(), fetchReputation()]);
+      if (!cancelled) {
+        setBlockchainLoading(false);
       }
     }
 
@@ -110,14 +149,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-3">
-          <div
-            className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"
-            role="status"
-            aria-label="Loading"
-          />
-          <p className="text-sm text-gray-600">Loading profile...</p>
-        </div>
+        <TransactionStatus message="Loading profile..." />
       </main>
     );
   }
@@ -204,16 +236,26 @@ export default function ProfilePage() {
         {/* Reputation Section */}
         <section className="rounded-lg bg-white p-6 shadow-md">
           <h2 className="text-lg font-semibold text-gray-900">Reputation</h2>
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-3xl font-bold text-blue-600">{reputationBalance}</span>
-            <span className="text-sm text-gray-500">Reputation Tokens</span>
-          </div>
+          {blockchainLoading ? (
+            <div className="mt-3">
+              <TransactionStatus message="Loading reputation from blockchain..." />
+            </div>
+          ) : (
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-3xl font-bold text-blue-600">{reputationBalance}</span>
+              <span className="text-sm text-gray-500">Reputation Tokens</span>
+            </div>
+          )}
         </section>
 
         {/* Credentials Section */}
         <section className="rounded-lg bg-white p-6 shadow-md">
           <h2 className="text-lg font-semibold text-gray-900">Credentials</h2>
-          {credentials.length === 0 ? (
+          {blockchainLoading ? (
+            <div className="mt-3">
+              <TransactionStatus message="Loading credentials from blockchain..." />
+            </div>
+          ) : credentials.length === 0 ? (
             <p className="mt-3 text-sm text-gray-500">No credentials found</p>
           ) : (
             <ul className="mt-3 space-y-3">

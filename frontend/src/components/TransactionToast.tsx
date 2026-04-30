@@ -75,7 +75,7 @@ export default function TransactionToast({
     <div
       role="status"
       aria-live="polite"
-      className={`fixed bottom-4 right-4 z-50 flex max-w-sm items-start gap-3 rounded-lg border p-4 shadow-lg ${bgColor}`}
+      className={`flex max-w-sm items-start gap-3 rounded-lg border p-4 shadow-lg ${bgColor}`}
     >
       {/* Icon / Spinner */}
       <div className="flex-shrink-0 pt-0.5">

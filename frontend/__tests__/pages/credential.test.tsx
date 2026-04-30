@@ -24,6 +24,19 @@ jest.mock("@/contexts/WalletContext", () => ({
   useWallet: () => mockWalletState,
 }));
 
+// Mock TransactionContext
+const mockShowError = jest.fn().mockReturnValue("toast-err");
+jest.mock("@/contexts/TransactionContext", () => ({
+  useTransactionToast: () => ({
+    showLoading: jest.fn().mockReturnValue("toast-1"),
+    showSuccess: jest.fn().mockReturnValue("toast-2"),
+    showError: mockShowError,
+    updateToast: jest.fn(),
+    dismissToast: jest.fn(),
+    dismissAll: jest.fn(),
+  }),
+}));
+
 import CredentialVerificationPage from "@/app/credentials/[tokenId]/page";
 
 const sampleCredential = {
@@ -51,7 +64,7 @@ describe("CredentialVerificationPage", () => {
     render(<CredentialVerificationPage />);
 
     expect(screen.getByRole("status")).toBeInTheDocument();
-    expect(screen.getByText("Loading credential...")).toBeInTheDocument();
+    expect(screen.getByText("Verifying credential on blockchain...")).toBeInTheDocument();
   });
 
   it("displays credential data after loading", async () => {
@@ -137,7 +150,7 @@ describe("CredentialVerificationPage", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
-        "Failed to load credential data"
+        "An unexpected error occurred during the transaction."
       );
     });
   });
