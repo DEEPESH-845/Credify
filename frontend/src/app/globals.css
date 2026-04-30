@@ -1,3 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: #2563eb;
+    --color-background: #f9fafb;
+    --color-surface: #ffffff;
+    --color-text-primary: #111827;
+    --color-text-secondary: #4b5563;
+  }
+}
+
+@layer utilities {
+  .focus-ring {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
