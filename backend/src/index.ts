@@ -1,7 +1,9 @@
 import express from "express";
+import { corsMiddleware } from "./middleware/cors";
 import { sanitizeMiddleware } from "./middleware/sanitize";
 import { authRateLimiter } from "./middleware/rateLimiter";
 import { globalErrorHandler } from "./middleware/errorHandler";
+import { runMigrations } from "./migrations/run";
 import authRoutes from "./routes/auth";
 import profileRoutes from "./routes/profiles";
 import connectionRoutes from "./routes/connections";
@@ -12,6 +14,8 @@ import ipfsRoutes from "./routes/ipfs";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// CORS must be applied before other middleware so preflight requests are handled
+app.use(corsMiddleware);
 app.use(express.json());
 app.use(sanitizeMiddleware);
 
@@ -40,8 +44,16 @@ app.use("/api/ipfs", ipfsRoutes);
 // Global error handler — must be registered AFTER all routes
 app.use(globalErrorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Backend server running on port ${PORT}`);
-});
+// Run database migrations before starting the server
+runMigrations()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Backend server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to run database migrations:", err);
+    process.exit(1);
+  });
 
 export default app;

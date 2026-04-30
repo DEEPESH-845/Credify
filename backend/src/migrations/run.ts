@@ -32,7 +32,12 @@ async function getExecutedMigrations(): Promise<string[]> {
   return result.rows.map((row: { name: string }) => row.name);
 }
 
-async function runMigrations(): Promise<void> {
+/**
+ * Run all pending migrations. Safe to call multiple times — already-executed
+ * migrations are skipped. Does NOT close the connection pool, so it can be
+ * called from the server startup path.
+ */
+export async function runMigrations(): Promise<void> {
   await ensureMigrationsTable();
   const executed = await getExecutedMigrations();
 
@@ -70,21 +75,22 @@ async function rollbackMigrations(): Promise<void> {
   }
 }
 
-async function main(): Promise<void> {
-  const command = process.argv[2];
-
-  try {
-    if (command === "down" || command === "rollback") {
-      await rollbackMigrations();
-    } else {
-      await runMigrations();
+// When run directly as a script (e.g. `ts-node src/migrations/run.ts`)
+const isDirectRun = require.main === module;
+if (isDirectRun) {
+  (async () => {
+    const command = process.argv[2];
+    try {
+      if (command === "down" || command === "rollback") {
+        await rollbackMigrations();
+      } else {
+        await runMigrations();
+      }
+    } catch (error) {
+      console.error("Migration failed:", error);
+      process.exit(1);
+    } finally {
+      await pool.end();
     }
-  } catch (error) {
-    console.error("Migration failed:", error);
-    process.exit(1);
-  } finally {
-    await pool.end();
-  }
+  })();
 }
-
-main();

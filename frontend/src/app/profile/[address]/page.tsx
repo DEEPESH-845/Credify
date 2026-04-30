@@ -7,6 +7,7 @@ import { useTransactionToast } from "@/contexts/TransactionContext";
 import { parseTransactionError } from "@/lib/transaction-utils";
 import { getProfile, ProfileData, ApiRequestError } from "@/lib/api";
 import TransactionStatus from "@/components/TransactionStatus";
+import EndorseButton from "@/components/EndorseButton";
 
 interface CredentialData {
   credentialType: string;
@@ -246,6 +247,12 @@ export default function ProfilePage() {
               <span className="text-sm text-gray-500">Reputation Tokens</span>
             </div>
           )}
+          <EndorseButton
+            endorsedAddress={profileAddress}
+            onEndorsed={() => {
+              fetchReputation();
+            }}
+          />
         </section>
 
         {/* Credentials Section */}

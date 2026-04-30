@@ -5,6 +5,6 @@
   },
   "network": {
     "chainId": 31337,
-    "name": "hardhat"
+    "name": "localhost"
   }
 }

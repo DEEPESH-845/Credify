@@ -103,6 +103,23 @@ export interface ProfileData {
 }
 
 /**
+ * Create a new profile for the authenticated user.
+ */
+export async function createProfile(
+  data: ProfileUpdatePayload,
+  jwt: string
+): Promise<ProfileData> {
+  return request<ProfileData>(
+    "/api/profiles",
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    },
+    jwt
+  );
+}
+
+/**
  * Fetch a user profile by wallet address.
  */
 export async function getProfile(
@@ -396,3 +413,41 @@ export async function uploadFile(
 }
 
 export { request, API_BASE_URL };
+
+/**
+ * Retrieve a file from IPFS via the backend.
+ * Returns the file content as a Blob.
+ */
+export async function getIpfsFile(
+  cid: string,
+  jwt: string
+): Promise<Blob> {
+  const headers: Record<string, string> = {};
+  if (jwt) {
+    headers["Authorization"] = `Bearer ${jwt}`;
+  }
+
+  const res = await fetch(`${API_BASE_URL}/api/ipfs/${cid}`, {
+    method: "GET",
+    headers,
+  });
+
+  if (!res.ok) {
+    let code = "UNKNOWN_ERROR";
+    let message = `Request failed with status ${res.status}`;
+
+    try {
+      const body = await res.json();
+      if (body.error) {
+        code = body.error.code || code;
+        message = body.error.message || message;
+      }
+    } catch {
+      // Response body wasn't JSON — use defaults
+    }
+
+    throw new ApiRequestError(res.status, code, message);
+  }
+
+  return res.blob();
+}
