@@ -30,7 +30,7 @@ const IPFS_GATEWAY = process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://ipfs.io/ip
 export default function ProfilePage() {
   const params = useParams();
   const profileAddress = params.address as string;
-  const { jwt, credentialNFT, reputationToken } = useWallet();
+  const { jwt, credentialNFT, reputationToken, isSessionLoading } = useWallet();
   const toast = useTransactionToast();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -120,6 +120,8 @@ export default function ProfilePage() {
   }, [reputationToken, profileAddress, toast]);
 
   useEffect(() => {
+    if (isSessionLoading) return;
+
     let cancelled = false;
 
     async function loadAll() {
@@ -145,7 +147,7 @@ export default function ProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [fetchProfile, fetchCredentials, fetchReputation]);
+  }, [isSessionLoading, fetchProfile, fetchCredentials, fetchReputation]);
 
   if (loading) {
     return (

@@ -43,7 +43,7 @@ function validateForm(fields: {
 
 export default function ProfileEditPage() {
   const router = useRouter();
-  const { address, jwt } = useWallet();
+  const { address, jwt, isSessionLoading } = useWallet();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -60,10 +60,10 @@ export default function ProfileEditPage() {
 
   // Redirect to /login if not authenticated
   useEffect(() => {
-    if (!jwt || !address) {
+    if (!isSessionLoading && (!jwt || !address)) {
       router.replace("/login");
     }
-  }, [jwt, address, router]);
+  }, [jwt, address, isSessionLoading, router]);
 
   // Load current profile on mount
   const loadProfile = useCallback(async () => {

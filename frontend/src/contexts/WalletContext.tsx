@@ -33,6 +33,8 @@ export interface WalletContextValue {
   jwt: string | null;
   setJwt: (token: string | null) => void;
   isConnecting: boolean;
+  /** True while the provider is restoring session from localStorage */
+  isSessionLoading: boolean;
   error: string | null;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
@@ -47,6 +49,7 @@ const WalletContext = createContext<WalletContextValue>({
   jwt: null,
   setJwt: () => {},
   isConnecting: false,
+  isSessionLoading: true,
   error: null,
   connectWallet: async () => {},
   disconnectWallet: () => {},
@@ -64,17 +67,73 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null);
   const [jwt, setJwtState] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load JWT from localStorage on mount
+  // Load JWT from localStorage on mount (client-side only).
+  // This runs once after hydration and sets both jwt and isSessionLoading.
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(JWT_STORAGE_KEY);
-      if (stored) {
-        setJwtState(stored);
-      }
+    const stored = localStorage.getItem(JWT_STORAGE_KEY);
+    if (stored) {
+      setJwtState(stored);
+    } else {
+      // No stored session — done loading
+      setIsSessionLoading(false);
     }
   }, []);
+
+  // Auto-reconnect wallet when a stored JWT exists but address is not set.
+  // Uses eth_accounts (no user prompt) to silently restore the connection.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.ethereum) {
+      // No MetaMask available — if jwt was loaded, session is still "loaded"
+      // (user can make API calls, just no contract interactions)
+      if (jwt) setIsSessionLoading(false);
+      return;
+    }
+    if (address) {
+      // Already connected — session fully restored
+      setIsSessionLoading(false);
+      return;
+    }
+    if (!jwt) return; // No session to restore (handled by the JWT loading effect)
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        // eth_accounts returns already-connected accounts without prompting
+        const accounts = (await window.ethereum!.request({
+          method: "eth_accounts",
+        })) as string[];
+
+        if (cancelled) return;
+
+        if (!accounts || accounts.length === 0) {
+          setIsSessionLoading(false);
+          return;
+        }
+
+        const browserProvider = new BrowserProvider(window.ethereum!);
+        const walletSigner = await browserProvider.getSigner();
+        const walletAddress = await walletSigner.getAddress();
+
+        if (!cancelled) {
+          setProvider(browserProvider);
+          setSigner(walletSigner);
+          setAddress(walletAddress);
+          setIsSessionLoading(false);
+        }
+      } catch {
+        // Silent reconnect failed — user will need to click Connect Wallet
+        if (!cancelled) setIsSessionLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [jwt, address]);
 
   const setJwt = useCallback((token: string | null) => {
     setJwtState(token);
@@ -204,6 +263,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       jwt,
       setJwt,
       isConnecting,
+      isSessionLoading,
       error,
       connectWallet,
       disconnectWallet,
@@ -217,6 +277,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       jwt,
       setJwt,
       isConnecting,
+      isSessionLoading,
       error,
       connectWallet,
       disconnectWallet,

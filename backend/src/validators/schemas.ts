@@ -72,3 +72,20 @@ export const paginationQuerySchema = z.object({
     .transform((val) => (val ? parseInt(val, 10) : 20))
     .pipe(z.number().int().positive().max(100)),
 });
+
+export const connectionsQuerySchema = z.object({
+  page: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 1))
+    .pipe(z.number().int().positive()),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 20))
+    .pipe(z.number().int().positive().max(100)),
+  status: z
+    .enum(["pending", "accepted", "declined"])
+    .optional()
+    .default("accepted"),
+});

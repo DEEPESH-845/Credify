@@ -116,13 +116,14 @@ export async function declineRequest(
 }
 
 /**
- * Returns a paginated list of accepted connections for the given user,
+ * Returns a paginated list of connections for the given user filtered by status,
  * enriched with profile summary data for the connected user.
  */
 export async function listConnections(
   walletAddress: string,
   page: number,
-  limit: number
+  limit: number,
+  status: "pending" | "accepted" | "declined" = "accepted"
 ): Promise<{
   connections: ConnectionWithProfile[];
   total: number;
@@ -134,7 +135,8 @@ export async function listConnections(
   const { connections, total } = await connectionRepository.findByUser(
     normalizedAddress,
     page,
-    limit
+    limit,
+    status
   );
 
   // Enrich each connection with the other user's profile summary

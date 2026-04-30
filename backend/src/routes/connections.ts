@@ -3,7 +3,7 @@ import { authMiddleware, AuthenticatedRequest } from "../middleware/auth";
 import { validate, validateQuery } from "../middleware/validate";
 import {
   connectionRequestSchema,
-  paginationQuerySchema,
+  connectionsQuerySchema,
 } from "../validators/schemas";
 import * as connectionService from "../services/connectionService";
 
@@ -209,16 +209,17 @@ router.put(
 router.get(
   "/",
   authMiddleware,
-  validateQuery(paginationQuerySchema),
+  validateQuery(connectionsQuerySchema),
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const callerAddress = req.user!.address;
-      const { page, limit } = (req as any).validatedQuery;
+      const { page, limit, status } = (req as any).validatedQuery;
 
       const result = await connectionService.listConnections(
         callerAddress,
         page,
-        limit
+        limit,
+        status
       );
 
       res.status(200).json(result);

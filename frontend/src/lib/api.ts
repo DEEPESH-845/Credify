@@ -159,7 +159,8 @@ export async function updateProfile(
 
 /**
  * Upload a profile image to IPFS via the backend.
- * Returns the updated profile with the new profile_image_cid.
+ * The backend returns { cid, profile }. This function extracts and returns
+ * the profile object so callers get a ProfileData directly.
  */
 export async function uploadProfileImage(
   address: string,
@@ -200,7 +201,8 @@ export async function uploadProfileImage(
     throw new ApiRequestError(res.status, code, message);
   }
 
-  return res.json() as Promise<ProfileData>;
+  const body = await res.json() as { cid: string; profile: ProfileData };
+  return body.profile;
 }
 
 /**

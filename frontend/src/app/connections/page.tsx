@@ -15,7 +15,7 @@ import {
 
 export default function ConnectionsPage() {
   const router = useRouter();
-  const { address, jwt } = useWallet();
+  const { address, jwt, isSessionLoading } = useWallet();
 
   // Accepted connections state
   const [connections, setConnections] = useState<ConnectionData[]>([]);
@@ -40,10 +40,10 @@ export default function ConnectionsPage() {
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!jwt) {
+    if (!isSessionLoading && !jwt) {
       router.replace("/login");
     }
-  }, [jwt, router]);
+  }, [jwt, isSessionLoading, router]);
 
   // Fetch accepted connections
   const fetchConnections = useCallback(async () => {

@@ -47,25 +47,26 @@ export async function updateStatus(
 export async function findByUser(
   walletAddress: string,
   page: number,
-  limit: number
+  limit: number,
+  status: "pending" | "accepted" | "declined" = "accepted"
 ): Promise<{ connections: Connection[]; total: number }> {
   const offset = (page - 1) * limit;
 
   const countResult = await pool.query(
     `SELECT COUNT(*) FROM connections
      WHERE (requester_address = $1 OR recipient_address = $1)
-       AND status = 'accepted'`,
-    [walletAddress]
+       AND status = $2`,
+    [walletAddress, status]
   );
   const total = parseInt(countResult.rows[0].count, 10);
 
   const result = await pool.query(
     `SELECT * FROM connections
      WHERE (requester_address = $1 OR recipient_address = $1)
-       AND status = 'accepted'
+       AND status = $2
      ORDER BY created_at DESC
-     LIMIT $2 OFFSET $3`,
-    [walletAddress, limit, offset]
+     LIMIT $3 OFFSET $4`,
+    [walletAddress, status, limit, offset]
   );
 
   return { connections: result.rows, total };

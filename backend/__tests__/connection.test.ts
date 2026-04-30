@@ -447,7 +447,8 @@ describe("GET /api/connections", () => {
     expect(mockedConnRepo.findByUser).toHaveBeenCalledWith(
       REQUESTER_ADDRESS.toLowerCase(),
       2,
-      5
+      5,
+      "accepted"
     );
   });
 
@@ -461,7 +462,8 @@ describe("GET /api/connections", () => {
     expect(mockedConnRepo.findByUser).toHaveBeenCalledWith(
       REQUESTER_ADDRESS.toLowerCase(),
       1,
-      20
+      20,
+      "accepted"
     );
   });
 

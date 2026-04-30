@@ -15,7 +15,7 @@ const MAX_POST_LENGTH = 5000;
 
 export default function FeedPage() {
   const router = useRouter();
-  const { address, jwt } = useWallet();
+  const { address, jwt, isSessionLoading } = useWallet();
 
   // Feed state
   const [posts, setPosts] = useState<PostData[]>([]);
@@ -35,10 +35,10 @@ export default function FeedPage() {
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!jwt) {
+    if (!isSessionLoading && !jwt) {
       router.replace("/login");
     }
-  }, [jwt, router]);
+  }, [jwt, isSessionLoading, router]);
 
   // Fetch feed
   const fetchFeed = useCallback(async () => {
