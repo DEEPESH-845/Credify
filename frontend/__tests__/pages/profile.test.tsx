@@ -93,7 +93,7 @@ describe("ProfilePage", () => {
     };
     mockGetProfile.mockResolvedValue(sampleProfile);
     mockGetHolderCredentials.mockResolvedValue([]);
-    mockBalanceOf.mockResolvedValue(BigInt(100));
+    mockBalanceOf.mockResolvedValue(BigInt("100000000000000000000"));
   });
 
   it("shows loading state initially", () => {

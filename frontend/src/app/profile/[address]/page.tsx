@@ -8,6 +8,7 @@ import { useTransactionToast } from "@/contexts/TransactionContext";
 import { parseTransactionError } from "@/lib/transaction-utils";
 import { getProfile, ProfileData, ApiRequestError } from "@/lib/api";
 import { truncateAddress } from "@/lib/utils";
+import { formatUnits } from "ethers";
 import PageLayout from "@/components/PageLayout";
 import Skeleton from "@/components/ui/Skeleton";
 import ErrorState from "@/components/ui/ErrorState";
@@ -106,7 +107,13 @@ export default function ProfilePage() {
 
     try {
       const balance: bigint = await reputationToken.balanceOf(profileAddress);
-      setReputationBalance(balance.toString());
+      // Format from raw wei (18 decimals) to human-readable number
+      const formatted = formatUnits(balance, 18);
+      // Remove trailing zeros: "10.000000000000000000" → "10"
+      const clean = formatted.includes(".")
+        ? formatted.replace(/\.?0+$/, "")
+        : formatted;
+      setReputationBalance(clean);
     } catch (err: unknown) {
       const parsed = parseTransactionError(err);
 
