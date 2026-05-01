@@ -191,27 +191,27 @@ function ProfileEditContent() {
       <div className="flex items-center justify-center py-20">
         <div className="flex flex-col items-center gap-3">
           <div
-            className="h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-primary-600"
+            className="h-8 w-8 animate-spin rounded-full border-4 border-neutral-700 border-t-primary-500"
             role="status"
             aria-label="Loading"
           />
-          <p className="text-sm text-neutral-600">Loading profile...</p>
+          <p className="text-sm text-neutral-400">Loading profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow-card">
-      <h1 className="text-2xl font-bold text-neutral-900">Edit Profile</h1>
-      <p className="mt-1 text-sm text-neutral-600">
+    <div className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
+      <h1 className="text-2xl font-bold text-neutral-50">Edit Profile</h1>
+      <p className="mt-1 text-sm text-neutral-400">
         Update your professional profile information
       </p>
 
       {successMessage && (
         <div
           role="status"
-          className="mt-4 rounded-md border border-success-100 bg-success-50 p-4 text-sm text-success-700"
+          className="mt-4 rounded-md border border-success-500/20 bg-success-500/10 p-4 text-sm text-success-300"
         >
           {successMessage}
         </div>
@@ -220,15 +220,15 @@ function ProfileEditContent() {
       {errorMessage && (
         <div
           role="alert"
-          className="mt-4 rounded-md border border-error-100 bg-error-50 p-4 text-sm text-error-700"
+          className="mt-4 rounded-md border border-error-500/20 bg-error-500/10 p-4 text-sm text-error-300"
         >
           {errorMessage}
         </div>
       )}
 
       {/* Profile Image Section */}
-      <div className="mt-6 border-b border-neutral-200 pb-6">
-        <h2 className="text-sm font-semibold text-neutral-700">
+      <div className="mt-6 border-b border-white/[0.06] pb-6">
+        <h2 className="text-sm font-semibold text-neutral-300">
           Profile Image
         </h2>
         <div className="mt-3 flex items-center gap-4">
@@ -236,11 +236,11 @@ function ProfileEditContent() {
             <img
               src={displayImageUrl}
               alt={profileImageAlt}
-              className="h-20 w-20 rounded-full object-cover border-2 border-neutral-200"
+              className="h-20 w-20 rounded-full object-cover border-2 border-white/[0.06]"
             />
           ) : (
             <div
-              className="flex h-20 w-20 items-center justify-center rounded-full bg-primary-100 text-xl font-bold text-primary-600 border-2 border-neutral-200"
+              className="flex h-20 w-20 items-center justify-center rounded-full bg-primary-900/50 text-xl font-bold text-primary-400 border-2 border-white/[0.06]"
               aria-label="Default avatar"
             >
               {displayName?.[0]?.toUpperCase() || address?.[0]?.toUpperCase() || "?"}
@@ -249,7 +249,7 @@ function ProfileEditContent() {
           <div>
             <label
               htmlFor="profile-image-upload"
-              className={`inline-flex cursor-pointer items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 ${
+              className={`inline-flex cursor-pointer items-center rounded-md border border-white/[0.06] bg-neutral-900/50 px-4 py-2 text-sm font-medium text-neutral-300 shadow-sm hover:bg-neutral-800/80 hover:border-white/[0.1] focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2 focus-within:ring-offset-neutral-950 ${
                 uploading ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
@@ -276,7 +276,7 @@ function ProfileEditContent() {
         <div>
           <label
             htmlFor="display-name"
-            className="block text-sm font-medium text-neutral-700"
+            className="block text-sm font-medium text-neutral-300"
           >
             Display Name
           </label>
@@ -286,22 +286,22 @@ function ProfileEditContent() {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             maxLength={100}
-            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 focus:border-primary-500 ${
+            className={`mt-1 block w-full rounded-md border bg-neutral-900/50 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 focus:border-primary-500 ${
               formErrors.display_name
-                ? "border-error-300"
-                : "border-neutral-300"
+                ? "border-error-500/50"
+                : "border-white/[0.06]"
             }`}
             placeholder="Your display name"
           />
           <div className="mt-1 flex justify-between">
             {formErrors.display_name ? (
-              <p className="text-xs text-error-600">
+              <p className="text-xs text-error-400">
                 {formErrors.display_name}
               </p>
             ) : (
               <span />
             )}
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-neutral-500">
               {displayName.length}/100
             </p>
           </div>
@@ -311,7 +311,7 @@ function ProfileEditContent() {
         <div>
           <label
             htmlFor="headline"
-            className="block text-sm font-medium text-neutral-700"
+            className="block text-sm font-medium text-neutral-300"
           >
             Headline
           </label>
@@ -321,22 +321,22 @@ function ProfileEditContent() {
             value={headline}
             onChange={(e) => setHeadline(e.target.value)}
             maxLength={200}
-            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 focus:border-primary-500 ${
+            className={`mt-1 block w-full rounded-md border bg-neutral-900/50 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 focus:border-primary-500 ${
               formErrors.headline
-                ? "border-error-300"
-                : "border-neutral-300"
+                ? "border-error-500/50"
+                : "border-white/[0.06]"
             }`}
             placeholder="e.g. Senior Blockchain Developer"
           />
           <div className="mt-1 flex justify-between">
             {formErrors.headline ? (
-              <p className="text-xs text-error-600">
+              <p className="text-xs text-error-400">
                 {formErrors.headline}
               </p>
             ) : (
               <span />
             )}
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-neutral-500">
               {headline.length}/200
             </p>
           </div>
@@ -346,7 +346,7 @@ function ProfileEditContent() {
         <div>
           <label
             htmlFor="bio"
-            className="block text-sm font-medium text-neutral-700"
+            className="block text-sm font-medium text-neutral-300"
           >
             Bio
           </label>
@@ -355,7 +355,7 @@ function ProfileEditContent() {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={4}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 focus:border-primary-500"
+            className="mt-1 block w-full rounded-md border border-white/[0.06] bg-neutral-900/50 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 focus:border-primary-500"
             placeholder="Tell others about yourself..."
           />
         </div>
@@ -364,7 +364,7 @@ function ProfileEditContent() {
         <div>
           <label
             htmlFor="location"
-            className="block text-sm font-medium text-neutral-700"
+            className="block text-sm font-medium text-neutral-300"
           >
             Location
           </label>
@@ -374,22 +374,22 @@ function ProfileEditContent() {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             maxLength={100}
-            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 focus:border-primary-500 ${
+            className={`mt-1 block w-full rounded-md border bg-neutral-900/50 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 focus:border-primary-500 ${
               formErrors.location
-                ? "border-error-300"
-                : "border-neutral-300"
+                ? "border-error-500/50"
+                : "border-white/[0.06]"
             }`}
             placeholder="e.g. San Francisco, CA"
           />
           <div className="mt-1 flex justify-between">
             {formErrors.location ? (
-              <p className="text-xs text-error-600">
+              <p className="text-xs text-error-400">
                 {formErrors.location}
               </p>
             ) : (
               <span />
             )}
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-neutral-500">
               {location.length}/100
             </p>
           </div>
@@ -400,14 +400,14 @@ function ProfileEditContent() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>
           <button
             type="button"
             onClick={() => router.push(`/profile/${address}`)}
-            className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+            className="rounded-md border border-white/[0.06] bg-neutral-900/50 px-4 py-2 text-sm font-medium text-neutral-300 shadow-sm hover:bg-neutral-800/80 hover:border-white/[0.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
           >
             Cancel
           </button>

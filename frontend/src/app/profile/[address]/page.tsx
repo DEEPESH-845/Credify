@@ -181,7 +181,7 @@ export default function ProfilePage() {
         <div role="status" aria-label="Loading profile">
           <span className="sr-only">Loading profile...</span>
           {/* Skeleton layout: avatar circle, name line, headline line, bio block */}
-          <section className="rounded-lg bg-white p-6 shadow-card">
+          <section className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
             <div className="flex items-start gap-6">
               <Skeleton className="h-24 w-24 rounded-full flex-shrink-0" />
               <div className="flex-1 min-w-0 space-y-3">
@@ -191,7 +191,7 @@ export default function ProfilePage() {
                 <Skeleton className="h-3 w-80" />
               </div>
             </div>
-            <div className="mt-4 border-t border-neutral-100 pt-4 space-y-2">
+            <div className="mt-4 border-t border-white/[0.06] pt-4 space-y-2">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
@@ -213,8 +213,8 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <PageLayout>
-        <div className="w-full max-w-md mx-auto rounded-lg bg-white p-8 shadow-card text-center">
-          <p className="text-neutral-600">Profile not found</p>
+        <div className="w-full max-w-md mx-auto rounded-xl bg-neutral-900/80 border border-white/[0.06] p-8 backdrop-blur-sm shadow-card text-center">
+          <p className="text-neutral-400">Profile not found</p>
         </div>
       </PageLayout>
     );
@@ -227,14 +227,14 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between">
           <Link
             href="/feed"
-            className="text-sm text-primary-600 hover:text-primary-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+            className="text-sm text-primary-400 hover:text-primary-300 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 rounded"
           >
             ← Back to Feed
           </Link>
           {isOwnProfile && (
             <Link
               href="/profile/edit"
-              className="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+              className="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
             >
               Edit Profile
             </Link>
@@ -242,7 +242,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Profile Card */}
-        <section className="rounded-lg bg-white p-6 shadow-card">
+        <section className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
           <div className="flex items-start gap-6">
             {/* Profile Image */}
             <div className="flex-shrink-0">
@@ -250,11 +250,11 @@ export default function ProfilePage() {
                 <img
                   src={profileImageUrl}
                   alt={profileImageAlt}
-                  className="h-24 w-24 rounded-full object-cover border-2 border-neutral-200"
+                  className="h-24 w-24 rounded-full object-cover border-2 border-white/[0.06]"
                 />
               ) : (
                 <div
-                  className="flex h-24 w-24 items-center justify-center rounded-full bg-primary-100 text-2xl font-bold text-primary-600 border-2 border-neutral-200"
+                  className="flex h-24 w-24 items-center justify-center rounded-full bg-primary-900/50 text-2xl font-bold text-primary-400 border-2 border-white/[0.06]"
                   aria-label="Default avatar"
                 >
                   {(profile.display_name || profile.wallet_address)?.[0]?.toUpperCase() || "?"}
@@ -264,16 +264,16 @@ export default function ProfilePage() {
 
             {/* Profile Info */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-neutral-900 truncate">
+              <h1 className="text-2xl font-bold text-neutral-50 truncate">
                 {profile.display_name || "Unnamed User"}
               </h1>
               {profile.headline && (
-                <p className="mt-1 text-neutral-600 truncate">{profile.headline}</p>
+                <p className="mt-1 text-neutral-400 truncate">{profile.headline}</p>
               )}
               {profile.location && (
                 <p className="mt-1 text-sm text-neutral-500">{profile.location}</p>
               )}
-              <p className="mt-2 text-xs text-neutral-400 font-mono truncate">
+              <p className="mt-2 text-xs text-neutral-500 font-mono truncate">
                 {profile.wallet_address}
               </p>
             </div>
@@ -281,23 +281,23 @@ export default function ProfilePage() {
 
           {/* Bio */}
           {profile.bio && (
-            <div className="mt-4 border-t border-neutral-100 pt-4">
-              <h2 className="text-sm font-semibold text-neutral-700">About</h2>
-              <p className="mt-1 text-sm text-neutral-600 whitespace-pre-wrap">{profile.bio}</p>
+            <div className="mt-4 border-t border-white/[0.06] pt-4">
+              <h2 className="text-sm font-semibold text-neutral-300">About</h2>
+              <p className="mt-1 text-sm text-neutral-400 whitespace-pre-wrap">{profile.bio}</p>
             </div>
           )}
         </section>
 
         {/* Reputation Section */}
-        <section className="rounded-lg bg-white p-6 shadow-card">
-          <h2 className="text-lg font-semibold text-neutral-900">Reputation</h2>
+        <section className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
+          <h2 className="text-lg font-semibold text-neutral-50">Reputation</h2>
           {blockchainLoading ? (
             <div className="mt-3">
               <TransactionStatus message="Loading reputation from blockchain..." />
             </div>
           ) : (
             <div className="mt-3 flex items-center gap-2">
-              <span className="text-3xl font-bold text-primary-600">{reputationBalance}</span>
+              <span className="text-3xl font-bold text-primary-400">{reputationBalance}</span>
               <span className="text-sm text-neutral-500">Reputation Tokens</span>
             </div>
           )}
@@ -310,8 +310,8 @@ export default function ProfilePage() {
         </section>
 
         {/* Credentials Section */}
-        <section className="rounded-lg bg-white p-6 shadow-card">
-          <h2 className="text-lg font-semibold text-neutral-900">Credentials</h2>
+        <section className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
+          <h2 className="text-lg font-semibold text-neutral-50">Credentials</h2>
           {blockchainLoading ? (
             <div className="mt-3">
               <TransactionStatus message="Loading credentials from blockchain..." />
@@ -323,11 +323,11 @@ export default function ProfilePage() {
               {credentials.map((cred) => (
                 <li
                   key={cred.tokenId}
-                  className="rounded-md border border-neutral-200 p-4"
+                  className="rounded-md border border-white/[0.06] p-4"
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-medium text-neutral-900">{cred.credentialType}</h3>
+                      <h3 className="font-medium text-neutral-50">{cred.credentialType}</h3>
                       <p className="mt-1 text-xs text-neutral-500 font-mono truncate">
                         Issuer: {cred.issuer}
                       </p>
@@ -335,7 +335,7 @@ export default function ProfilePage() {
                         Issued: {cred.issuanceDate}
                       </p>
                     </div>
-                    <span className="inline-flex items-center rounded-full bg-success-100 px-2.5 py-0.5 text-xs font-medium text-success-800">
+                    <span className="inline-flex items-center rounded-full bg-success-500/10 px-2.5 py-0.5 text-xs font-medium text-success-400">
                       Verified
                     </span>
                   </div>
@@ -344,7 +344,7 @@ export default function ProfilePage() {
                       href={`${IPFS_GATEWAY}/${cred.ipfsCID}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-2 inline-block text-xs text-primary-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+                      className="mt-2 inline-block text-xs text-primary-400 hover:text-primary-300 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 rounded"
                     >
                       View Document
                     </a>

@@ -16,11 +16,11 @@ export default function PageLayout({
   return (
     <main
       id="main-content"
-      className="min-h-screen bg-neutral-50 pt-20 px-4 sm:px-6"
+      className="min-h-screen bg-neutral-950 bg-gradient-mesh pt-20 px-4 sm:px-6 pb-12"
     >
-      <div className={`mx-auto ${maxWidth}`}>
+      <div className={`mx-auto ${maxWidth} animate-fade-in`}>
         {title && (
-          <h1 className="text-3xl font-bold text-neutral-900 mb-6">{title}</h1>
+          <h1 className="text-2xl font-semibold text-neutral-50 mb-8 tracking-tight">{title}</h1>
         )}
         {children}
       </div>

@@ -138,7 +138,7 @@ describe("ConnectionsPage", () => {
     mockGetConnections.mockReturnValue(new Promise(() => {}));
     render(<ConnectionsPage />);
     // Skeleton loading state — 3 skeleton connection items are rendered
-    const skeletons = document.querySelectorAll(".animate-pulse");
+    const skeletons = document.querySelectorAll(".animate-shimmer");
     expect(skeletons.length).toBeGreaterThan(0);
   });
 

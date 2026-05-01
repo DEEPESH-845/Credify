@@ -9,19 +9,19 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary:
-    "bg-primary-600 text-white hover:bg-primary-700 disabled:bg-primary-600/50",
+    "bg-primary-600 text-white hover:bg-primary-500 active:bg-primary-700 shadow-md shadow-primary-600/20 hover:shadow-lg hover:shadow-primary-500/25 disabled:bg-primary-600/40 disabled:shadow-none",
   secondary:
-    "bg-neutral-100 text-neutral-800 hover:bg-neutral-200 border border-neutral-200 disabled:bg-neutral-100/50 disabled:text-neutral-400",
+    "bg-neutral-800 text-neutral-200 hover:bg-neutral-700 active:bg-neutral-750 border border-white/[0.06] hover:border-white/[0.1] disabled:bg-neutral-800/50 disabled:text-neutral-500",
   danger:
-    "bg-error-600 text-white hover:bg-error-700 disabled:bg-error-600/50",
+    "bg-error-600/90 text-white hover:bg-error-500 active:bg-error-700 disabled:bg-error-600/30",
   ghost:
-    "bg-transparent text-neutral-700 hover:bg-neutral-100 disabled:text-neutral-400",
+    "bg-transparent text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.04] active:bg-white/[0.06] disabled:text-neutral-600",
 };
 
 const sizeClasses: Record<NonNullable<ButtonProps["size"]>, string> = {
-  sm: "px-3 py-1.5 text-sm",
+  sm: "px-3 py-1.5 text-xs",
   md: "px-4 py-2 text-sm",
-  lg: "px-6 py-3 text-base",
+  lg: "px-6 py-2.5 text-sm",
 };
 
 export default function Button({
@@ -38,7 +38,7 @@ export default function Button({
   return (
     <button
       disabled={isDisabled}
-      className={`inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 focus-visible:outline-none disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...rest}
     >
       {isLoading && (

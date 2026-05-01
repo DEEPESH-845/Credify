@@ -98,7 +98,7 @@ export default function EndorseButton({
       {!showForm && tx.step !== "success" && (
         <button
           onClick={() => setShowForm(true)}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+          className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
         >
           Endorse
         </button>
@@ -107,7 +107,7 @@ export default function EndorseButton({
       {tx.step === "success" && (
         <div
           role="status"
-          className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700"
+          className="rounded-md border border-success-500/20 bg-success-500/10 p-3 text-sm text-success-300"
         >
           Endorsement recorded on-chain!
           <button
@@ -115,7 +115,7 @@ export default function EndorseButton({
               tx.reset();
               setShowForm(false);
             }}
-            className="ml-2 text-green-800 underline hover:text-green-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+            className="ml-2 text-success-400 underline hover:text-success-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 rounded"
           >
             Endorse another skill
           </button>
@@ -127,7 +127,7 @@ export default function EndorseButton({
           {displayError && (
             <div
               role="alert"
-              className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+              className="rounded-md border border-error-500/20 bg-error-500/10 p-3 text-sm text-error-300"
             >
               {displayError}
             </div>
@@ -140,7 +140,7 @@ export default function EndorseButton({
           <div>
             <label
               htmlFor="skill-id"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-neutral-300"
             >
               Skill
             </label>
@@ -151,7 +151,7 @@ export default function EndorseButton({
               onChange={(e) => setSkillId(e.target.value)}
               placeholder="e.g., Solidity, React, Smart Contracts"
               disabled={tx.isLoading}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="mt-1 block w-full rounded-md border border-white/[0.06] bg-neutral-900/50 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 shadow-sm focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:bg-neutral-800/50 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -159,7 +159,7 @@ export default function EndorseButton({
             <button
               type="submit"
               disabled={tx.isLoading || !skillId.trim() || isWrongChain}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {tx.isLoading ? "Processing..." : "Submit Endorsement"}
             </button>
@@ -171,7 +171,7 @@ export default function EndorseButton({
                 tx.reset();
               }}
               disabled={tx.isLoading}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md border border-white/[0.06] bg-neutral-900/50 px-4 py-2 text-sm font-medium text-neutral-300 hover:bg-neutral-800/80 hover:border-white/[0.1] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>

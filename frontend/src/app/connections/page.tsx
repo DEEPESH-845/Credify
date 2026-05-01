@@ -167,11 +167,11 @@ function ConnectionsContent() {
 
   return (
     <>
-      <h1 className="mb-6 text-3xl font-bold text-neutral-900">Connections</h1>
+      <h1 className="mb-6 text-3xl font-bold text-neutral-50">Connections</h1>
 
       {/* Send Connection Request */}
-      <section className="mb-8 rounded-lg bg-white p-6 shadow-card">
-        <h2 className="mb-4 text-xl font-semibold text-neutral-800">
+      <section className="mb-8 rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
+        <h2 className="mb-4 text-xl font-semibold text-neutral-50">
           Send Connection Request
         </h2>
         <form onSubmit={handleSendRequest} className="flex gap-3">
@@ -184,24 +184,24 @@ function ConnectionsContent() {
             value={recipientAddress}
             onChange={(e) => setRecipientAddress(e.target.value)}
             placeholder="Enter wallet address (0x...)"
-            className="flex-1 rounded-lg border border-neutral-200 px-4 py-2 text-sm focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+            className="flex-1 rounded-lg border border-white/[0.06] bg-neutral-900/50 px-4 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
             disabled={sendLoading}
           />
           <button
             type="submit"
             disabled={sendLoading || !recipientAddress.trim()}
-            className="rounded-lg bg-primary-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-primary-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {sendLoading ? "Sending..." : "Send Request"}
           </button>
         </form>
         {sendSuccess && (
-          <p className="mt-3 text-sm text-success-600" role="status">
+          <p className="mt-3 text-sm text-success-400" role="status">
             {sendSuccess}
           </p>
         )}
         {sendError && (
-          <p className="mt-3 text-sm text-error-600" role="alert">
+          <p className="mt-3 text-sm text-error-400" role="alert">
             {sendError}
           </p>
         )}
@@ -209,11 +209,11 @@ function ConnectionsContent() {
 
       {/* Pending Requests */}
       {!pendingLoading && pendingRequests.length > 0 && (
-        <section className="mb-8 rounded-lg bg-white p-6 shadow-card">
-          <h2 className="mb-4 text-xl font-semibold text-neutral-800">
+        <section className="mb-8 rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
+          <h2 className="mb-4 text-xl font-semibold text-neutral-50">
             Pending Requests
           </h2>
-          <ul className="divide-y divide-neutral-200" role="list">
+          <ul className="divide-y divide-white/[0.06]" role="list">
             {pendingRequests.map((conn) => (
               <li
                 key={conn.id}
@@ -228,7 +228,7 @@ function ConnectionsContent() {
                     />
                   ) : (
                     <div
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-400"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-800 text-neutral-500"
                       aria-label="Default avatar"
                     >
                       <svg
@@ -247,16 +247,16 @@ function ConnectionsContent() {
                   <div>
                     <Link
                       href={`/profile/${conn.requester_address}`}
-                      className="text-sm font-medium text-primary-700 hover:text-primary-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
+                      className="text-sm font-medium text-primary-400 hover:text-primary-300 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 rounded"
                     >
                       {getDisplayName(conn)}
                     </Link>
                     {conn.profile?.headline && (
-                      <p className="text-xs text-neutral-400">
+                      <p className="text-xs text-neutral-500">
                         {conn.profile.headline}
                       </p>
                     )}
-                    <p className="text-xs text-neutral-400">
+                    <p className="text-xs text-neutral-500">
                       {conn.requester_address}
                     </p>
                   </div>
@@ -265,14 +265,14 @@ function ConnectionsContent() {
                   <button
                     onClick={() => handleAccept(conn.id)}
                     disabled={actionLoading === conn.id}
-                    className="rounded-md bg-success-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-success-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:opacity-50"
+                    className="rounded-md bg-success-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-success-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:opacity-50"
                   >
                     Accept
                   </button>
                   <button
                     onClick={() => handleDecline(conn.id)}
                     disabled={actionLoading === conn.id}
-                    className="rounded-md bg-error-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-error-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:opacity-50"
+                    className="rounded-md bg-error-600/80 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-error-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:opacity-50"
                   >
                     Decline
                   </button>
@@ -287,15 +287,15 @@ function ConnectionsContent() {
       {error && (
         <div
           role="alert"
-          className="mb-6 rounded-md border border-error-100 bg-error-50 p-4 text-sm text-error-700"
+          className="mb-6 rounded-md border border-error-500/20 bg-error-500/10 p-4 text-sm text-error-300"
         >
           {error}
         </div>
       )}
 
       {/* Accepted Connections */}
-      <section className="rounded-lg bg-white p-6 shadow-card">
-        <h2 className="mb-4 text-xl font-semibold text-neutral-800">
+      <section className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
+        <h2 className="mb-4 text-xl font-semibold text-neutral-50">
           My Connections
         </h2>
 
@@ -315,14 +315,14 @@ function ConnectionsContent() {
           <EmptyState message="No connections yet." action={{ label: "Find people", href: "/feed" }} />
         ) : (
           <>
-            <ul className="divide-y divide-neutral-200" role="list">
+            <ul className="divide-y divide-white/[0.06]" role="list">
               {connections.map((conn) => {
                 const connAddress = conn.profile?.wallet_address || conn.requester_address;
                 return (
                   <li key={conn.id} className="py-4">
                     <Link
                       href={`/profile/${connAddress}`}
-                      className="flex items-center gap-3 rounded-md -mx-2 px-2 py-1 hover:bg-neutral-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                      className="flex items-center gap-3 rounded-md -mx-2 px-2 py-1 hover:bg-neutral-800/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
                     >
                       {conn.profile?.profile_image_cid ? (
                         <img
@@ -332,7 +332,7 @@ function ConnectionsContent() {
                         />
                       ) : (
                         <div
-                          className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-400"
+                          className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-800 text-neutral-500"
                           aria-label="Default avatar"
                         >
                           <svg
@@ -349,15 +349,15 @@ function ConnectionsContent() {
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-primary-700">
+                        <p className="text-sm font-medium text-primary-400">
                           {getDisplayName(conn)}
                         </p>
                         {conn.profile?.headline && (
-                          <p className="truncate text-xs text-neutral-400">
+                          <p className="truncate text-xs text-neutral-500">
                             {conn.profile.headline}
                           </p>
                         )}
-                        <p className="text-xs text-neutral-400">
+                        <p className="text-xs text-neutral-500">
                           {connAddress}
                         </p>
                       </div>
@@ -369,15 +369,15 @@ function ConnectionsContent() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="mt-4 flex items-center justify-between border-t border-neutral-200 pt-4">
+              <div className="mt-4 flex items-center justify-between border-t border-white/[0.06] pt-4">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md border border-white/[0.06] px-3 py-1.5 text-sm text-neutral-300 transition-colors hover:bg-neutral-800/80 hover:border-white/[0.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-neutral-600">
+                <span className="text-sm text-neutral-400">
                   Page {page} of {totalPages}
                 </span>
                 <button
@@ -385,7 +385,7 @@ function ConnectionsContent() {
                     setPage((p) => Math.min(totalPages, p + 1))
                   }
                   disabled={page >= totalPages}
-                  className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md border border-white/[0.06] px-3 py-1.5 text-sm text-neutral-300 transition-colors hover:bg-neutral-800/80 hover:border-white/[0.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Next
                 </button>

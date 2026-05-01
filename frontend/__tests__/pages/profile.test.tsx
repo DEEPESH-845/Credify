@@ -285,7 +285,7 @@ describe("ProfilePage", () => {
     const status = screen.getByRole("status");
     expect(status).toBeInTheDocument();
     // Skeleton elements are rendered inside the status container
-    const skeletons = status.querySelectorAll(".animate-pulse");
+    const skeletons = status.querySelectorAll(".animate-shimmer");
     expect(skeletons.length).toBeGreaterThan(0);
   });
 

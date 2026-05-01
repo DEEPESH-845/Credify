@@ -133,13 +133,16 @@ export default function LoginPage() {
   })();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-neutral-950 bg-gradient-mesh p-6">
+      <div className="w-full max-w-md rounded-2xl bg-neutral-900/60 backdrop-blur-xl border border-white/[0.06] p-8 shadow-2xl">
+        {/* Gradient accent bar */}
+        <div className="mx-auto mb-6 h-1 w-16 rounded-full bg-gradient-to-r from-primary-500 to-primary-400" />
+
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-neutral-50">
             Blockchain Social Network
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-neutral-400">
             Connect your wallet to get started
           </p>
         </div>
@@ -147,7 +150,7 @@ export default function LoginPage() {
         {displayError && (
           <div
             role="alert"
-            className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+            className="mb-6 rounded-md border border-error-500/20 bg-error-500/10 p-4 text-sm text-error-300"
           >
             {displayError}
           </div>
@@ -156,24 +159,24 @@ export default function LoginPage() {
         {isLoading && (
           <div className="mb-6 flex flex-col items-center gap-3">
             <div
-              className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"
+              className="h-8 w-8 animate-spin rounded-full border-4 border-neutral-700 border-t-primary-500"
               role="status"
               aria-label="Loading"
             />
             {statusMessage && (
-              <p className="text-sm text-gray-600">{statusMessage}</p>
+              <p className="text-sm text-neutral-400">{statusMessage}</p>
             )}
           </div>
         )}
 
         {isWalletConnected && !isLoading ? (
           <>
-            <p className="mb-4 text-center text-sm text-gray-600">
-              Wallet connected: <span className="font-medium text-gray-900">{truncateAddress(address)}</span>
+            <p className="mb-4 text-center text-sm text-neutral-400">
+              Wallet connected: <span className="font-medium text-neutral-50">{truncateAddress(address)}</span>
             </p>
             <button
               onClick={handleSignIn}
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+              className="w-full rounded-lg bg-primary-600 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
             >
               Sign In
             </button>
@@ -182,13 +185,13 @@ export default function LoginPage() {
           <button
             onClick={handleConnect}
             disabled={isLoading}
-            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg bg-primary-600 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? "Connecting..." : "Connect Wallet"}
           </button>
         )}
 
-        <p className="mt-6 text-center text-xs text-gray-500">
+        <p className="mt-6 text-center text-xs text-neutral-500">
           You will be asked to sign a message to verify wallet ownership. No
           transaction fees are required.
         </p>

@@ -59,35 +59,35 @@ export default function TransactionToast({
 
   const bgColor =
     status === "error"
-      ? "bg-red-50 border-red-200"
+      ? "bg-neutral-900/90 border-error-500/20"
       : status === "success"
-        ? "bg-green-50 border-green-200"
-        : "bg-white border-gray-200";
+        ? "bg-neutral-900/90 border-success-500/20"
+        : "bg-neutral-900/90 border-white/[0.06]";
 
   const textColor =
     status === "error"
-      ? "text-red-700"
+      ? "text-error-400"
       : status === "success"
-        ? "text-green-700"
-        : "text-gray-700";
+        ? "text-success-400"
+        : "text-neutral-200";
 
   return (
     <div
       role="status"
       aria-live="polite"
-      className={`flex max-w-sm items-start gap-3 rounded-lg border p-4 shadow-lg ${bgColor}`}
+      className={`flex max-w-sm items-start gap-3 rounded-xl border p-4 shadow-lg backdrop-blur-xl ${bgColor}`}
     >
       {/* Icon / Spinner */}
       <div className="flex-shrink-0 pt-0.5">
         {status === "loading" && (
           <div
-            className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"
+            className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-700 border-t-primary-500"
             aria-label="Transaction pending"
           />
         )}
         {status === "success" && (
           <svg
-            className="h-5 w-5 text-green-500"
+            className="h-5 w-5 text-success-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -103,7 +103,7 @@ export default function TransactionToast({
         )}
         {status === "error" && (
           <svg
-            className="h-5 w-5 text-red-500"
+            className="h-5 w-5 text-error-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -125,7 +125,7 @@ export default function TransactionToast({
         {status === "error" && onRetry && (
           <button
             onClick={onRetry}
-            className="mt-2 text-sm font-medium text-red-600 hover:text-red-800 underline"
+            className="mt-2 text-sm font-medium text-error-400 hover:text-error-300 underline transition-colors"
           >
             Retry
           </button>
@@ -136,7 +136,7 @@ export default function TransactionToast({
       {status !== "loading" && (
         <button
           onClick={handleDismiss}
-          className="flex-shrink-0 text-gray-400 hover:text-gray-600"
+          className="flex-shrink-0 text-neutral-500 hover:text-neutral-300 transition-colors"
           aria-label="Dismiss notification"
         >
           <svg

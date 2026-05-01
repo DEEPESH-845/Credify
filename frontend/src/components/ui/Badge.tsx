@@ -4,10 +4,10 @@ interface BadgeProps {
 }
 
 const variantClasses: Record<BadgeProps["variant"], string> = {
-  success: "bg-success-50 text-success-700",
-  warning: "bg-yellow-50 text-yellow-700",
-  error: "bg-error-50 text-error-700",
-  info: "bg-primary-50 text-primary-700",
+  success: "bg-success-500/10 text-success-400 border border-success-500/20",
+  warning: "bg-warning-500/10 text-warning-400 border border-warning-500/20",
+  error: "bg-error-500/10 text-error-400 border border-error-500/20",
+  info: "bg-primary-500/10 text-primary-400 border border-primary-500/20",
 };
 
 export default function Badge({ variant, children }: BadgeProps) {

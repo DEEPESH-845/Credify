@@ -17,23 +17,23 @@ export default function Input({
     <div>
       <label
         htmlFor={id}
-        className="block text-sm font-medium text-neutral-700 mb-1"
+        className="block text-sm font-medium text-neutral-300 mb-1.5"
       >
         {label}
       </label>
       <input
         id={id}
-        className={`block w-full rounded-md border px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 transition-colors focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 focus-visible:outline-none ${
+        className={`block w-full rounded-lg border bg-neutral-900/50 px-3.5 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-500 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 focus-visible:outline-none focus:border-primary-500/50 ${
           error
-            ? "border-error-600"
-            : "border-neutral-200 hover:border-neutral-400"
+            ? "border-error-500/50"
+            : "border-white/[0.06] hover:border-white/[0.12]"
         } ${className}`}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
         {...rest}
       />
       {error && (
-        <p id={`${id}-error`} className="mt-1 text-sm text-error-600" role="alert">
+        <p id={`${id}-error`} className="mt-1.5 text-sm text-error-400" role="alert">
           {error}
         </p>
       )}

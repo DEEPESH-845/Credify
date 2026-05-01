@@ -10,8 +10,8 @@ import React, {
 } from "react";
 import { BrowserProvider, Contract, JsonRpcSigner } from "ethers";
 import { getContractAddresses } from "@/lib/contracts-config";
-import CredentialNFTArtifact from "../../../contracts/artifacts/contracts/CredentialNFT.sol/CredentialNFT.json";
-import ReputationTokenArtifact from "../../../contracts/artifacts/contracts/ReputationToken.sol/ReputationToken.json";
+import CredentialNFTArtifact from "@/contracts/CredentialNFT.json";
+import ReputationTokenArtifact from "@/contracts/ReputationToken.json";
 
 declare global {
   interface Window {

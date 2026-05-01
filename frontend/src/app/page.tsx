@@ -20,8 +20,8 @@ export default function Home() {
 
   if (isSessionLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+      <main className="flex min-h-screen items-center justify-center bg-neutral-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-neutral-700 border-t-primary-500" />
       </main>
     );
   }

@@ -24,10 +24,10 @@ export default function TransactionStatus({
       aria-live="polite"
     >
       <div
-        className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"
+        className="h-8 w-8 animate-spin rounded-full border-4 border-neutral-700 border-t-primary-500"
         aria-label="Transaction pending"
       />
-      <p className="text-sm text-gray-600">{message}</p>
+      <p className="text-sm text-neutral-400">{message}</p>
     </div>
   );
 }

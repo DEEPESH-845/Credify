@@ -143,69 +143,69 @@ export default function CredentialVerificationPage() {
     <PageLayout maxWidth="max-w-2xl">
       <div className="space-y-6">
         {/* Header */}
-        <section className="rounded-lg bg-white p-6 shadow-card">
+        <section className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-neutral-900">
+              <h1 className="text-2xl font-bold text-neutral-50">
                 Credential Verification
               </h1>
-              <p className="mt-1 text-sm text-neutral-600">
+              <p className="mt-1 text-sm text-neutral-400">
                 Token ID: {credential.tokenId}
               </p>
             </div>
-            <span className="inline-flex items-center rounded-full bg-success-100 px-3 py-1 text-sm font-medium text-success-800">
+            <span className="inline-flex items-center rounded-full bg-success-500/10 px-3 py-1 text-sm font-medium text-success-400">
               Verified
             </span>
           </div>
         </section>
 
         {/* Credential Details */}
-        <section className="rounded-lg bg-white p-6 shadow-card">
-          <h2 className="text-lg font-semibold text-neutral-900">
+        <section className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
+          <h2 className="text-lg font-semibold text-neutral-50">
             Credential Details
           </h2>
           <dl className="mt-4 space-y-4">
             <div>
-              <dt className="text-sm font-medium text-neutral-600">
+              <dt className="text-sm font-medium text-neutral-400">
                 Credential Type
               </dt>
-              <dd className="mt-1 text-sm text-neutral-900">
+              <dd className="mt-1 text-sm text-neutral-100">
                 {credential.credentialType}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-neutral-600">
+              <dt className="text-sm font-medium text-neutral-400">
                 Issuer Address
               </dt>
-              <dd className="mt-1 text-sm text-neutral-900 font-mono break-all">
+              <dd className="mt-1 text-sm text-neutral-100 font-mono break-all">
                 {credential.issuer}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-neutral-600">
+              <dt className="text-sm font-medium text-neutral-400">
                 Holder Address
               </dt>
-              <dd className="mt-1 text-sm text-neutral-900 font-mono break-all">
+              <dd className="mt-1 text-sm text-neutral-100 font-mono break-all">
                 {credential.holder}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-neutral-600">
+              <dt className="text-sm font-medium text-neutral-400">
                 Issuance Date
               </dt>
-              <dd className="mt-1 text-sm text-neutral-900">
+              <dd className="mt-1 text-sm text-neutral-100">
                 {credential.issuanceDate}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-neutral-600">
+              <dt className="text-sm font-medium text-neutral-400">
                 Verification Status
               </dt>
               <dd className="mt-1">
-                <span className="inline-flex items-center rounded-full bg-success-100 px-2.5 py-0.5 text-xs font-medium text-success-800">
+                <span className="inline-flex items-center rounded-full bg-success-500/10 px-2.5 py-0.5 text-xs font-medium text-success-400">
                   Verified
                 </span>
-                <p className="mt-1 text-xs text-neutral-600">
+                <p className="mt-1 text-xs text-neutral-500">
                   This credential is recorded on-chain and is tamper-proof.
                 </p>
               </dd>
@@ -215,11 +215,11 @@ export default function CredentialVerificationPage() {
 
         {/* IPFS Document Link */}
         {credential.ipfsCID && (
-          <section className="rounded-lg bg-white p-6 shadow-card">
-            <h2 className="text-lg font-semibold text-neutral-900">
+          <section className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
+            <h2 className="text-lg font-semibold text-neutral-50">
               Credential Document
             </h2>
-            <p className="mt-2 text-sm text-neutral-600">
+            <p className="mt-2 text-sm text-neutral-400">
               The original credential document is stored on IPFS for
               decentralized, permanent access.
             </p>
@@ -227,11 +227,11 @@ export default function CredentialVerificationPage() {
               href={`${IPFS_GATEWAY}/${credential.ipfsCID}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-2 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+              className="mt-3 inline-flex items-center gap-2 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 transition-colors focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
             >
               View Document on IPFS
             </a>
-            <p className="mt-2 text-xs text-neutral-400 font-mono break-all">
+            <p className="mt-2 text-xs text-neutral-500 font-mono break-all">
               CID: {credential.ipfsCID}
             </p>
           </section>

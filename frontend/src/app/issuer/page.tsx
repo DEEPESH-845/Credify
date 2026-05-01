@@ -140,11 +140,11 @@ function IssuerContent() {
   return (
     <>
       {/* Header */}
-      <section className="rounded-lg bg-white p-6 shadow-card">
-        <h1 className="text-2xl font-bold text-neutral-900">
+      <section className="rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
+        <h1 className="text-2xl font-bold text-neutral-50">
           Issuer Dashboard
         </h1>
-        <p className="mt-1 text-sm text-neutral-600">
+        <p className="mt-1 text-sm text-neutral-400">
           Issue verifiable credentials as NFTs on the blockchain.
         </p>
       </section>
@@ -154,48 +154,48 @@ function IssuerContent() {
         <section
           role="status"
           aria-label="Success"
-          className="mt-6 rounded-lg border border-success-100 bg-success-50 p-6 shadow-card"
+          className="mt-6 rounded-xl border border-success-500/20 bg-success-500/10 p-6 shadow-card"
         >
-          <h2 className="text-lg font-semibold text-success-800">
+          <h2 className="text-lg font-semibold text-success-300">
             Credential Issued Successfully
           </h2>
           <dl className="mt-4 space-y-3">
             <div>
-              <dt className="text-sm font-medium text-success-700">
+              <dt className="text-sm font-medium text-success-400">
                 Token ID
               </dt>
-              <dd className="mt-1 text-sm text-success-800">
+              <dd className="mt-1 text-sm text-success-300">
                 {tx.result.tokenId}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-success-700">
+              <dt className="text-sm font-medium text-success-400">
                 Holder Address
               </dt>
-              <dd className="mt-1 text-sm text-success-800 font-mono break-all">
+              <dd className="mt-1 text-sm text-success-300 font-mono break-all">
                 {tx.result.holderAddress}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-success-700">
+              <dt className="text-sm font-medium text-success-400">
                 Credential Type
               </dt>
-              <dd className="mt-1 text-sm text-success-800">
+              <dd className="mt-1 text-sm text-success-300">
                 {tx.result.credentialType}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-success-700">
+              <dt className="text-sm font-medium text-success-400">
                 IPFS CID
               </dt>
-              <dd className="mt-1 text-sm text-success-800 font-mono break-all">
+              <dd className="mt-1 text-sm text-success-300 font-mono break-all">
                 {tx.result.ipfsCID}
               </dd>
             </div>
           </dl>
           <button
             onClick={resetForm}
-            className="mt-6 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+            className="mt-6 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
           >
             Issue Another Credential
           </button>
@@ -204,15 +204,15 @@ function IssuerContent() {
 
       {/* Form */}
       {tx.step !== "success" && (
-        <section className="mt-6 rounded-lg bg-white p-6 shadow-card">
-          <h2 className="text-lg font-semibold text-neutral-900">
+        <section className="mt-6 rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
+          <h2 className="text-lg font-semibold text-neutral-50">
             Issue New Credential
           </h2>
 
           {displayError && (
             <div
               role="alert"
-              className="mt-4 rounded-md border border-error-100 bg-error-50 p-4 text-sm text-error-700"
+              className="mt-4 rounded-md border border-error-500/20 bg-error-500/10 p-4 text-sm text-error-300"
             >
               {displayError}
             </div>
@@ -228,7 +228,7 @@ function IssuerContent() {
             <div>
               <label
                 htmlFor="holderAddress"
-                className="block text-sm font-medium text-neutral-700"
+                className="block text-sm font-medium text-neutral-300"
               >
                 Holder Wallet Address
               </label>
@@ -239,14 +239,14 @@ function IssuerContent() {
                 onChange={(e) => setHolderAddress(e.target.value)}
                 placeholder="0x..."
                 disabled={isLoading}
-                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                className="mt-1 block w-full rounded-md border border-white/[0.06] bg-neutral-900/50 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 shadow-sm focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:bg-neutral-800/50 disabled:cursor-not-allowed"
               />
             </div>
 
             <div>
               <label
                 htmlFor="credentialType"
-                className="block text-sm font-medium text-neutral-700"
+                className="block text-sm font-medium text-neutral-300"
               >
                 Credential Type
               </label>
@@ -257,14 +257,14 @@ function IssuerContent() {
                 onChange={(e) => setCredentialType(e.target.value)}
                 placeholder="e.g., Bachelor of Science in Computer Science"
                 disabled={isLoading}
-                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                className="mt-1 block w-full rounded-md border border-white/[0.06] bg-neutral-900/50 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 shadow-sm focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:bg-neutral-800/50 disabled:cursor-not-allowed"
               />
             </div>
 
             <div>
               <label
                 htmlFor="documentFile"
-                className="block text-sm font-medium text-neutral-700"
+                className="block text-sm font-medium text-neutral-300"
               >
                 Credential Document (PDF)
               </label>
@@ -276,14 +276,14 @@ function IssuerContent() {
                   setDocumentFile(e.target.files?.[0] ?? null)
                 }
                 disabled={isLoading}
-                className="mt-1 block w-full text-sm text-neutral-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-700 hover:file:bg-primary-100 disabled:cursor-not-allowed"
+                className="mt-1 block w-full text-sm text-neutral-400 file:mr-4 file:rounded-md file:border-0 file:bg-primary-600/20 file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-400 hover:file:bg-primary-600/30 disabled:cursor-not-allowed"
               />
             </div>
 
             <button
               type="submit"
               disabled={isLoading || isWrongChain}
-              className="w-full rounded-lg bg-primary-600 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-lg bg-primary-600 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? "Processing..." : "Issue Credential"}
             </button>
