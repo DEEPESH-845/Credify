@@ -1,7 +1,7 @@
 {
   "contracts": {
-    "credentialNFT": "0x977B9136B9A6513Fa6A7C4a4D748f86583D4C0f5",
-    "reputationToken": "0x2c4196f600D7287D4167B3859e1cB0227050FaD0"
+    "credentialNFT": "0x0b57bFEc9BCE34478FC495356De6e3a747Ad491e",
+    "reputationToken": "0x6c19e2E532AE8a36bAc71544116B4856738Ef971"
   },
   "network": {
     "chainId": 11155111,

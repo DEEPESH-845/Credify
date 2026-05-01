@@ -30,10 +30,12 @@ const DEFAULT_ALLOWED_HEADERS = ["Content-Type", "Authorization"];
  * the request origin matches the configured origin.
  */
 export function createCorsMiddleware(options?: Partial<CorsOptions>) {
-  const origin =
+  const originsEnv =
     options?.origin ??
     process.env.FRONTEND_ORIGIN ??
     "http://localhost:3000";
+  // Support comma-separated origins for multiple allowed domains
+  const allowedOrigins = originsEnv.split(",").map((o) => o.trim());
   const methods = options?.methods ?? DEFAULT_METHODS;
   const allowedHeaders = options?.allowedHeaders ?? DEFAULT_ALLOWED_HEADERS;
   const credentials = options?.credentials ?? true;
@@ -46,9 +48,23 @@ export function createCorsMiddleware(options?: Partial<CorsOptions>) {
   ): void {
     const requestOrigin = req.headers.origin;
 
-    // Only set CORS headers when the request origin matches the allowed origin
-    if (requestOrigin === origin) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
+    // Check if the request origin matches any allowed origin
+    // Also support wildcard subdomain patterns like https://*.vercel.app
+    const isAllowed = requestOrigin
+      ? allowedOrigins.some((allowed) => {
+          if (allowed.includes("*")) {
+            // Convert wildcard pattern to regex
+            const pattern = allowed
+              .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+              .replace(/\*/g, "[a-zA-Z0-9-]+");
+            return new RegExp(`^${pattern}$`).test(requestOrigin);
+          }
+          return requestOrigin === allowed;
+        })
+      : false;
+
+    if (isAllowed && requestOrigin) {
+      res.setHeader("Access-Control-Allow-Origin", requestOrigin);
 
       if (credentials) {
         res.setHeader("Access-Control-Allow-Credentials", "true");
