@@ -94,9 +94,10 @@ async function uploadToPinataREST(
 ): Promise<string> {
   const fileName = `upload-${Date.now()}.${getExtension(mimeType)}`;
 
-  // Build multipart form data manually using the built-in FormData
+  // Build multipart form data using Node.js built-in FormData
   const formData = new FormData();
   const blob = new Blob([buffer], { type: mimeType });
+  formData.append("network", "public");
   formData.append("file", blob, fileName);
 
   const response = await fetch("https://uploads.pinata.cloud/v3/files", {
@@ -109,18 +110,24 @@ async function uploadToPinataREST(
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => "Unknown error");
+    console.error(`Pinata upload failed (${response.status}):`, errorText);
     throw new Error(
       `Pinata upload failed (${response.status}): ${errorText}`
     );
   }
 
-  const result = await response.json() as { data: { cid: string } };
+  const result = (await response.json()) as {
+    data?: { cid?: string };
+  };
 
-  if (!result.data?.cid) {
+  const cid = result?.data?.cid;
+  if (!cid) {
+    console.error("Pinata response missing CID:", JSON.stringify(result));
     throw new Error("Pinata upload response missing CID");
   }
 
-  return result.data.cid;
+  console.log(`Pinata upload success: CID=${cid}`);
+  return cid;
 }
 
 /**
