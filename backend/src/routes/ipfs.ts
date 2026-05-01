@@ -128,12 +128,12 @@ router.post(
 
 /**
  * GET /api/ipfs/:cid
- * Retrieve a file from IPFS by CID. Requires JWT authentication.
+ * Retrieve a file from IPFS by CID.
+ * This endpoint is public so that <img> tags can load images directly.
  * Returns the file content with the appropriate Content-Type header.
  */
 router.get(
   "/:cid",
-  authMiddleware,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const cid = req.params.cid as string;

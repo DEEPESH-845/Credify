@@ -111,7 +111,11 @@ export async function uploadProfileImage(
   }
 
   // Delegate to IPFS service — this may throw FileTooLargeError or UnsupportedFileTypeError
-  const cid = await ipfsService.uploadImage(fileBuffer, mimeType);
+  // Validate image type first
+  if (!ipfsService.ALLOWED_IMAGE_TYPES.includes(mimeType)) {
+    throw new ipfsService.UnsupportedFileTypeError(ipfsService.ALLOWED_IMAGE_TYPES);
+  }
+  const cid = await ipfsService.uploadAndStore(fileBuffer, mimeType);
 
   // Store the CID on the profile
   const updated = await userRepository.update(normalizedProfile, {

@@ -211,12 +211,13 @@ describe("GET /api/ipfs/:cid", () => {
     expect(res.body.error.code).toBe("NOT_FOUND");
   });
 
-  it("should return 401 without authentication", async () => {
+  it("should allow unauthenticated access to retrieve files", async () => {
     const res = await request(app).get(
       "/api/ipfs/QmSomeCid12345678901234567890123456789012"
     );
 
-    expect(res.status).toBe(401);
+    // Endpoint is public — returns 404 for non-existent CID, not 401
+    expect(res.status).toBe(404);
   });
 });
 

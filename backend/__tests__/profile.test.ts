@@ -401,7 +401,7 @@ jest.mock("../src/services/ipfsService", () => {
   const actual = jest.requireActual("../src/services/ipfsService");
   return {
     ...actual,
-    uploadImage: jest.fn(),
+    uploadAndStore: jest.fn(),
     uploadToIPFS: jest.fn(),
   };
 });
@@ -425,7 +425,7 @@ describe("POST /api/profiles/:address/image", () => {
     const updatedUser = makeUser({ profile_image_cid: "QmFakeCid123" });
     mockedUserRepo.findByAddress.mockResolvedValue(existingUser);
     mockedUserRepo.update.mockResolvedValue(updatedUser);
-    mockedIpfsService.uploadImage.mockResolvedValue("QmFakeCid123");
+    mockedIpfsService.uploadAndStore.mockResolvedValue("QmFakeCid123");
 
     const res = await request(app)
       .post(`/api/profiles/${OWNER_ADDRESS}/image`)
@@ -438,7 +438,7 @@ describe("POST /api/profiles/:address/image", () => {
     expect(res.status).toBe(200);
     expect(res.body.cid).toBe("QmFakeCid123");
     expect(res.body.profile.profile_image_cid).toBe("QmFakeCid123");
-    expect(mockedIpfsService.uploadImage).toHaveBeenCalledWith(
+    expect(mockedIpfsService.uploadAndStore).toHaveBeenCalledWith(
       expect.any(Buffer),
       "image/jpeg"
     );
@@ -453,7 +453,7 @@ describe("POST /api/profiles/:address/image", () => {
     const updatedUser = makeUser({ profile_image_cid: "QmPngCid456" });
     mockedUserRepo.findByAddress.mockResolvedValue(existingUser);
     mockedUserRepo.update.mockResolvedValue(updatedUser);
-    mockedIpfsService.uploadImage.mockResolvedValue("QmPngCid456");
+    mockedIpfsService.uploadAndStore.mockResolvedValue("QmPngCid456");
 
     const res = await request(app)
       .post(`/api/profiles/${OWNER_ADDRESS}/image`)
@@ -468,7 +468,7 @@ describe("POST /api/profiles/:address/image", () => {
   });
 
   it("should return 403 when uploading to another user's profile", async () => {
-    mockedIpfsService.uploadImage.mockResolvedValue("QmShouldNotReach");
+    mockedIpfsService.uploadAndStore.mockResolvedValue("QmShouldNotReach");
 
     const res = await request(app)
       .post(`/api/profiles/${OTHER_ADDRESS}/image`)
@@ -480,7 +480,7 @@ describe("POST /api/profiles/:address/image", () => {
 
     expect(res.status).toBe(403);
     expect(res.body.error.code).toBe("FORBIDDEN");
-    expect(mockedIpfsService.uploadImage).not.toHaveBeenCalled();
+    expect(mockedIpfsService.uploadAndStore).not.toHaveBeenCalled();
   });
 
   it("should return 401 without authentication", async () => {
@@ -506,7 +506,7 @@ describe("POST /api/profiles/:address/image", () => {
 
   it("should return 415 for unsupported file type", async () => {
     mockedUserRepo.findByAddress.mockResolvedValue(makeUser());
-    mockedIpfsService.uploadImage.mockRejectedValue(
+    mockedIpfsService.uploadAndStore.mockRejectedValue(
       new ipfsService.UnsupportedFileTypeError(ipfsService.ALLOWED_IMAGE_TYPES)
     );
 
@@ -524,7 +524,7 @@ describe("POST /api/profiles/:address/image", () => {
 
   it("should return 413 when file exceeds maximum size via IPFS service", async () => {
     mockedUserRepo.findByAddress.mockResolvedValue(makeUser());
-    mockedIpfsService.uploadImage.mockRejectedValue(
+    mockedIpfsService.uploadAndStore.mockRejectedValue(
       new ipfsService.FileTooLargeError(ipfsService.MAX_FILE_SIZE)
     );
 
@@ -542,7 +542,7 @@ describe("POST /api/profiles/:address/image", () => {
 
   it("should return 404 when profile does not exist", async () => {
     mockedUserRepo.findByAddress.mockResolvedValue(null);
-    mockedIpfsService.uploadImage.mockResolvedValue("QmShouldNotReach");
+    mockedIpfsService.uploadAndStore.mockResolvedValue("QmShouldNotReach");
 
     const res = await request(app)
       .post(`/api/profiles/${OWNER_ADDRESS}/image`)
@@ -577,7 +577,7 @@ describe("POST /api/profiles/:address/image", () => {
     const updatedUser = makeUser({ profile_image_cid: "QmCaseCid" });
     mockedUserRepo.findByAddress.mockResolvedValue(existingUser);
     mockedUserRepo.update.mockResolvedValue(updatedUser);
-    mockedIpfsService.uploadImage.mockResolvedValue("QmCaseCid");
+    mockedIpfsService.uploadAndStore.mockResolvedValue("QmCaseCid");
 
     const res = await request(app)
       .post(`/api/profiles/${upperAddress}/image`)
