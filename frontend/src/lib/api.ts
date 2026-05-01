@@ -414,6 +414,22 @@ export async function uploadFile(
   return res.json() as Promise<{ cid: string }>;
 }
 
+/**
+ * Search for users by name or wallet address.
+ */
+export async function searchUsers(
+  query: string,
+  jwt: string,
+  limit: number = 10,
+  offset: number = 0
+): Promise<{ users: ProfileData[]; total: number }> {
+  return request<{ users: ProfileData[]; total: number }>(
+    `/api/profiles/search?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`,
+    { method: "GET" },
+    jwt
+  );
+}
+
 export { request, API_BASE_URL };
 
 /**

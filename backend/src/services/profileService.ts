@@ -124,3 +124,17 @@ export async function uploadProfileImage(
 
   return { cid, profile: updated ?? existing };
 }
+
+/**
+ * Search for users by name or address, excluding the caller.
+ * Returns user profiles with connection status relative to the caller.
+ */
+export async function searchUsers(
+  query: string,
+  callerAddress: string,
+  limit: number = 10,
+  offset: number = 0
+): Promise<{ users: User[]; total: number }> {
+  const normalizedCaller = callerAddress.toLowerCase();
+  return userRepository.searchUsers(query, normalizedCaller, limit, offset);
+}

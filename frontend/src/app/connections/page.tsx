@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useWallet } from "@/contexts/WalletContext";
 import {
@@ -9,7 +9,9 @@ import {
   sendConnectionRequest,
   acceptConnection,
   declineConnection,
+  searchUsers,
   ConnectionData,
+  ProfileData,
   ApiRequestError,
 } from "@/lib/api";
 import AuthGuard from "@/components/AuthGuard";
@@ -41,6 +43,14 @@ function ConnectionsContent() {
 
   // Action loading state (for accept/decline buttons)
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+
+  // Discover people state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<ProfileData[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchTotal, setSearchTotal] = useState(0);
+  const [requestedAddresses, setRequestedAddresses] = useState<Set<string>>(new Set());
+  const [connectingAddress, setConnectingAddress] = useState<string | null>(null);
 
   // Fetch accepted connections
   const fetchConnections = useCallback(async () => {
@@ -84,6 +94,30 @@ function ConnectionsContent() {
   useEffect(() => {
     fetchPendingRequests();
   }, [fetchPendingRequests]);
+
+  // Debounced search
+  useEffect(() => {
+    if (!jwt || searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setSearchTotal(0);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const result = await searchUsers(searchQuery.trim(), jwt);
+        setSearchResults(result.users);
+        setSearchTotal(result.total);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, jwt]);
 
   // Send connection request
   const handleSendRequest = async (e: React.FormEvent) => {
@@ -147,6 +181,37 @@ function ConnectionsContent() {
     }
   };
 
+  // Connect from discover section
+  const handleConnect = async (recipientAddr: string) => {
+    if (!jwt) return;
+    setConnectingAddress(recipientAddr);
+    try {
+      await sendConnectionRequest(recipientAddr, jwt);
+      setRequestedAddresses((prev) => new Set(prev).add(recipientAddr.toLowerCase()));
+    } catch (err: unknown) {
+      if (err instanceof ApiRequestError) {
+        setSendError(err.message);
+      } else {
+        setSendError("Failed to send connection request");
+      }
+    } finally {
+      setConnectingAddress(null);
+    }
+  };
+
+  // Build set of addresses that are already connected or pending
+  const connectedAddresses = useMemo(() => {
+    const set = new Set<string>();
+    for (const conn of connections) {
+      const addr = conn.profile?.wallet_address || conn.requester_address;
+      set.add(addr.toLowerCase());
+    }
+    for (const conn of pendingRequests) {
+      set.add(conn.requester_address.toLowerCase());
+    }
+    return set;
+  }, [connections, pendingRequests]);
+
   const totalPages = Math.ceil(total / limit);
 
   /**
@@ -168,6 +233,120 @@ function ConnectionsContent() {
   return (
     <>
       <h1 className="mb-6 text-3xl font-bold text-neutral-50">Connections</h1>
+
+      {/* Discover People */}
+      <section className="mb-8 rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
+        <h2 className="mb-4 text-xl font-semibold text-neutral-50">
+          Discover People
+        </h2>
+        <div className="mb-4">
+          <label htmlFor="search-users" className="sr-only">Search users</label>
+          <input
+            id="search-users"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name or wallet address..."
+            className="w-full rounded-lg border border-white/[0.06] bg-neutral-900/50 px-4 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
+          />
+        </div>
+
+        {searchLoading && (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3 py-3">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-32 mb-1" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-8 w-20 rounded-md" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!searchLoading && searchQuery.trim().length >= 2 && searchResults.length === 0 && (
+          <p className="text-sm text-neutral-500 text-center py-4">
+            No users found matching &ldquo;{searchQuery}&rdquo;
+          </p>
+        )}
+
+        {!searchLoading && searchResults.length > 0 && (
+          <ul className="divide-y divide-white/[0.06]">
+            {searchResults.map((user) => {
+              const userAddr = user.wallet_address.toLowerCase();
+              const isConnected = connectedAddresses.has(userAddr);
+              const isRequested = requestedAddresses.has(userAddr);
+              const isConnecting = connectingAddress === user.wallet_address;
+              const isSelf = address?.toLowerCase() === userAddr;
+
+              return (
+                <li key={user.wallet_address} className="flex items-center justify-between py-3">
+                  <Link
+                    href={`/profile/${user.wallet_address}`}
+                    className="flex items-center gap-3 min-w-0 flex-1 rounded-md hover:bg-neutral-800/50 -mx-2 px-2 py-1 transition-colors"
+                  >
+                    {user.profile_image_cid ? (
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_IPFS_GATEWAY}/${user.profile_image_cid}`}
+                        alt={`${user.display_name || truncateAddress(user.wallet_address)} profile photo`}
+                        className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-800 text-neutral-500 flex-shrink-0">
+                        <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-neutral-100 truncate">
+                        {user.display_name || "Unnamed User"}
+                      </p>
+                      {user.headline && (
+                        <p className="text-xs text-neutral-500 truncate">{user.headline}</p>
+                      )}
+                      <p className="text-xs text-neutral-600 font-mono truncate">{truncateAddress(user.wallet_address)}</p>
+                    </div>
+                  </Link>
+
+                  {!isSelf && (
+                    <div className="ml-3 flex-shrink-0">
+                      {isConnected ? (
+                        <span className="inline-flex items-center rounded-md bg-success-500/10 border border-success-500/20 px-3 py-1.5 text-xs font-medium text-success-400">
+                          Connected
+                        </span>
+                      ) : isRequested ? (
+                        <span className="inline-flex items-center rounded-md bg-neutral-800 border border-white/[0.06] px-3 py-1.5 text-xs font-medium text-neutral-400">
+                          Requested
+                        </span>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleConnect(user.wallet_address);
+                          }}
+                          disabled={isConnecting}
+                          className="rounded-md bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isConnecting ? "Sending..." : "Connect"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        {!searchLoading && searchQuery.trim().length < 2 && (
+          <p className="text-sm text-neutral-500 text-center py-4">
+            Type at least 2 characters to search for people
+          </p>
+        )}
+      </section>
 
       {/* Send Connection Request */}
       <section className="mb-8 rounded-xl bg-neutral-900/80 border border-white/[0.06] p-6 backdrop-blur-sm shadow-card">
@@ -312,7 +491,7 @@ function ConnectionsContent() {
             ))}
           </div>
         ) : connections.length === 0 ? (
-          <EmptyState message="No connections yet." action={{ label: "Find people", href: "/feed" }} />
+          <EmptyState message="No connections yet." action={{ label: "Find people", href: "#search-users" }} />
         ) : (
           <>
             <ul className="divide-y divide-white/[0.06]" role="list">

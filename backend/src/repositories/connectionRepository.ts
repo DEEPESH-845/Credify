@@ -71,3 +71,14 @@ export async function findByUser(
 
   return { connections: result.rows, total };
 }
+
+/**
+ * Get the connection status between two addresses.
+ * Returns the connection if one exists, null otherwise.
+ */
+export async function getConnectionStatus(
+  addressA: string,
+  addressB: string
+): Promise<Connection | null> {
+  return findExisting(addressA, addressB);
+}

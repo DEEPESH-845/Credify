@@ -89,3 +89,17 @@ export const connectionsQuerySchema = z.object({
     .optional()
     .default("accepted"),
 });
+
+export const userSearchQuerySchema = z.object({
+  q: z.string().min(1, "Search query is required").max(100),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 10))
+    .pipe(z.number().int().positive().max(50)),
+  offset: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 0))
+    .pipe(z.number().int().min(0)),
+});

@@ -1,8 +1,8 @@
 import { Router, Response } from "express";
 import multer from "multer";
 import { authMiddleware, AuthenticatedRequest } from "../middleware/auth";
-import { validate } from "../middleware/validate";
-import { createProfileSchema, updateProfileSchema } from "../validators/schemas";
+import { validate, validateQuery } from "../middleware/validate";
+import { createProfileSchema, updateProfileSchema, userSearchQuerySchema } from "../validators/schemas";
 import * as profileService from "../services/profileService";
 import {
   FileTooLargeError,
@@ -40,6 +40,33 @@ router.post(
         error: {
           code: "INTERNAL_ERROR",
           message: "Failed to create profile",
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/profiles/search?q=...&limit=10&offset=0
+ * Search for users by name or wallet address. Requires JWT authentication.
+ */
+router.get(
+  "/search",
+  authMiddleware,
+  validateQuery(userSearchQuerySchema),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const callerAddress = req.user!.address;
+      const { q, limit, offset } = (req as any).validatedQuery;
+
+      const result = await profileService.searchUsers(q, callerAddress, limit, offset);
+
+      res.status(200).json(result);
+    } catch (err) {
+      res.status(500).json({
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "Failed to search users",
         },
       });
     }
