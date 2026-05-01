@@ -227,14 +227,14 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between">
           <Link
             href="/feed"
-            className="text-sm text-primary-600 hover:text-primary-700 hover:underline"
+            className="text-sm text-primary-600 hover:text-primary-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
           >
             ← Back to Feed
           </Link>
           {isOwnProfile && (
             <Link
               href="/profile/edit"
-              className="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
             >
               Edit Profile
             </Link>
@@ -319,7 +319,7 @@ export default function ProfilePage() {
           ) : credentials.length === 0 ? (
             <p className="mt-3 text-sm text-neutral-500">No credentials found</p>
           ) : (
-            <ul className="mt-3 space-y-3">
+            <ul className="mt-3 space-y-3" role="list">
               {credentials.map((cred) => (
                 <li
                   key={cred.tokenId}
@@ -344,7 +344,7 @@ export default function ProfilePage() {
                       href={`${IPFS_GATEWAY}/${cred.ipfsCID}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-2 inline-block text-xs text-primary-600 hover:underline"
+                      className="mt-2 inline-block text-xs text-primary-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
                     >
                       View Document
                     </a>

@@ -195,7 +195,7 @@ function IssuerContent() {
           </dl>
           <button
             onClick={resetForm}
-            className="mt-6 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 transition-colors"
+            className="mt-6 rounded-lg bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
           >
             Issue Another Credential
           </button>
@@ -239,7 +239,7 @@ function IssuerContent() {
                 onChange={(e) => setHolderAddress(e.target.value)}
                 placeholder="0x..."
                 disabled={isLoading}
-                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:bg-neutral-100 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -257,7 +257,7 @@ function IssuerContent() {
                 onChange={(e) => setCredentialType(e.target.value)}
                 placeholder="e.g., Bachelor of Science in Computer Science"
                 disabled={isLoading}
-                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:bg-neutral-100 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -283,7 +283,7 @@ function IssuerContent() {
             <button
               type="submit"
               disabled={isLoading || isWrongChain}
-              className="w-full rounded-lg bg-primary-600 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-lg bg-primary-600 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? "Processing..." : "Issue Credential"}
             </button>

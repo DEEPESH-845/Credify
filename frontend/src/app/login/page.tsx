@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/contexts/WalletContext";
 import { requestNonce, verifySignature, ApiRequestError } from "@/lib/api";
+import { truncateAddress } from "@/lib/utils";
 
 type AuthStep = "idle" | "connecting" | "signing" | "verifying" | "done";
 
@@ -100,13 +101,15 @@ export default function LoginPage() {
     // and continue the auth flow
   };
 
-  // If wallet was already connected but no JWT, start auth directly
-  useEffect(() => {
-    if (address && signer && !jwt && authStep === "idle") {
-      // Wallet is already connected from a previous session — don't auto-auth,
-      // let the user click the button
-    }
-  }, [address, signer, jwt, authStep]);
+  const handleSignIn = async () => {
+    if (!address || !signer) return;
+    setError(null);
+    await authenticate(address, signer);
+  };
+
+  // Wallet is already connected but user has no JWT yet
+  const isWalletConnected =
+    address !== null && signer !== null && jwt === null && authStep === "idle";
 
   const isLoading =
     isConnecting ||
@@ -163,13 +166,27 @@ export default function LoginPage() {
           </div>
         )}
 
-        <button
-          onClick={handleConnect}
-          disabled={isLoading}
-          className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isLoading ? "Connecting..." : "Connect Wallet"}
-        </button>
+        {isWalletConnected && !isLoading ? (
+          <>
+            <p className="mb-4 text-center text-sm text-gray-600">
+              Wallet connected: <span className="font-medium text-gray-900">{truncateAddress(address)}</span>
+            </p>
+            <button
+              onClick={handleSignIn}
+              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+            >
+              Sign In
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={handleConnect}
+            disabled={isLoading}
+            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? "Connecting..." : "Connect Wallet"}
+          </button>
+        )}
 
         <p className="mt-6 text-center text-xs text-gray-500">
           You will be asked to sign a message to verify wallet ownership. No

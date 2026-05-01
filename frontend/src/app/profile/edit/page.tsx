@@ -238,7 +238,7 @@ function ProfileEditContent() {
           <div>
             <label
               htmlFor="profile-image-upload"
-              className={`inline-flex cursor-pointer items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2 ${
+              className={`inline-flex cursor-pointer items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 ${
                 uploading ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
@@ -275,9 +275,9 @@ function ProfileEditContent() {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             maxLength={100}
-            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 focus:border-primary-500 ${
               formErrors.display_name
-                ? "border-error-300 focus:ring-error-500 focus:border-error-500"
+                ? "border-error-300"
                 : "border-neutral-300"
             }`}
             placeholder="Your display name"
@@ -310,9 +310,9 @@ function ProfileEditContent() {
             value={headline}
             onChange={(e) => setHeadline(e.target.value)}
             maxLength={200}
-            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 focus:border-primary-500 ${
               formErrors.headline
-                ? "border-error-300 focus:ring-error-500 focus:border-error-500"
+                ? "border-error-300"
                 : "border-neutral-300"
             }`}
             placeholder="e.g. Senior Blockchain Developer"
@@ -344,7 +344,7 @@ function ProfileEditContent() {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={4}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 focus:border-primary-500"
             placeholder="Tell others about yourself..."
           />
         </div>
@@ -363,9 +363,9 @@ function ProfileEditContent() {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             maxLength={100}
-            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 focus:border-primary-500 ${
               formErrors.location
-                ? "border-error-300 focus:ring-error-500 focus:border-error-500"
+                ? "border-error-300"
                 : "border-neutral-300"
             }`}
             placeholder="e.g. San Francisco, CA"
@@ -389,14 +389,14 @@ function ProfileEditContent() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>
           <button
             type="button"
             onClick={() => router.push(`/profile/${address}`)}
-            className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
           >
             Cancel
           </button>

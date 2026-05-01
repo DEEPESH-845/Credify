@@ -137,4 +137,78 @@ describe("LoginPage", () => {
       screen.getByRole("button", { name: /connecting/i })
     ).toBeDisabled();
   });
+
+  describe("connected wallet state", () => {
+    beforeEach(() => {
+      mockWalletState = {
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+        signer: { signMessage: jest.fn() },
+        jwt: null,
+        setJwt: mockSetJwt,
+        isConnecting: false,
+        error: null,
+        connectWallet: mockConnectWallet,
+      };
+    });
+
+    it("shows Sign In button with truncated address when wallet is connected but no JWT", () => {
+      render(<LoginPage />);
+
+      expect(
+        screen.getByRole("button", { name: /sign in/i })
+      ).toBeInTheDocument();
+      expect(screen.getByText(/0x1234…5678/)).toBeInTheDocument();
+      expect(screen.getByText(/wallet connected/i)).toBeInTheDocument();
+      // Connect Wallet button should NOT be present
+      expect(
+        screen.queryByRole("button", { name: /connect wallet/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it("Sign In button triggers auth flow without calling connectWallet", async () => {
+      mockRequestNonce.mockResolvedValue({ nonce: "test-nonce" });
+      mockWalletState.signer!.signMessage.mockResolvedValue("test-signature");
+      mockVerifySignature.mockResolvedValue({
+        token: "test-jwt",
+        address: mockWalletState.address!,
+      });
+
+      render(<LoginPage />);
+
+      await act(async () => {
+        screen.getByRole("button", { name: /sign in/i }).click();
+      });
+
+      expect(mockConnectWallet).not.toHaveBeenCalled();
+      expect(mockRequestNonce).toHaveBeenCalledWith(
+        mockWalletState.address
+      );
+      expect(mockWalletState.signer!.signMessage).toHaveBeenCalledWith(
+        "test-nonce"
+      );
+      expect(mockVerifySignature).toHaveBeenCalledWith(
+        mockWalletState.address,
+        "test-signature",
+        "test-nonce"
+      );
+      expect(mockSetJwt).toHaveBeenCalledWith("test-jwt");
+    });
+
+    it("shows error and re-renders Sign In button on auth failure", async () => {
+      mockRequestNonce.mockRejectedValue(new Error("Network error"));
+
+      render(<LoginPage />);
+
+      await act(async () => {
+        screen.getByRole("button", { name: /sign in/i }).click();
+      });
+
+      // Error should be displayed
+      expect(screen.getByRole("alert")).toHaveTextContent("Network error");
+      // Sign In button should be re-rendered for retry
+      expect(
+        screen.getByRole("button", { name: /sign in/i })
+      ).toBeInTheDocument();
+    });
+  });
 });

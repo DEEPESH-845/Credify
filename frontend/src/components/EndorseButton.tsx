@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useTransaction } from "@/hooks/useTransaction";
 import TransactionStatus from "@/components/TransactionStatus";
+import { EXPECTED_CHAIN_ID } from "@/lib/constants";
 
 interface EndorseButtonProps {
   /** The wallet address of the user to endorse */
@@ -22,7 +23,7 @@ export default function EndorseButton({
   endorsedAddress,
   onEndorsed,
 }: EndorseButtonProps) {
-  const { address, reputationToken } = useWallet();
+  const { address, reputationToken, chainId } = useWallet();
   const [skillId, setSkillId] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -90,13 +91,14 @@ export default function EndorseButton({
   }
 
   const displayError = validationError || tx.error;
+  const isWrongChain = chainId !== null && chainId !== EXPECTED_CHAIN_ID;
 
   return (
     <div className="mt-4">
       {!showForm && tx.step !== "success" && (
         <button
           onClick={() => setShowForm(true)}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
         >
           Endorse
         </button>
@@ -113,7 +115,7 @@ export default function EndorseButton({
               tx.reset();
               setShowForm(false);
             }}
-            className="ml-2 text-green-800 underline hover:text-green-900"
+            className="ml-2 text-green-800 underline hover:text-green-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
           >
             Endorse another skill
           </button>
@@ -149,15 +151,15 @@ export default function EndorseButton({
               onChange={(e) => setSkillId(e.target.value)}
               placeholder="e.g., Solidity, React, Smart Contracts"
               disabled={tx.isLoading}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
 
           <div className="flex gap-2">
             <button
               type="submit"
-              disabled={tx.isLoading || !skillId.trim()}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={tx.isLoading || !skillId.trim() || isWrongChain}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {tx.isLoading ? "Processing..." : "Submit Endorsement"}
             </button>
@@ -169,7 +171,7 @@ export default function EndorseButton({
                 tx.reset();
               }}
               disabled={tx.isLoading}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>

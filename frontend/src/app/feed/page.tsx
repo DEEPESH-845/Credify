@@ -180,7 +180,7 @@ function FeedContent() {
             placeholder="What's on your mind?"
             maxLength={MAX_POST_LENGTH}
             rows={4}
-            className="w-full rounded-lg border border-neutral-200 px-4 py-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="w-full rounded-lg border border-neutral-200 px-4 py-3 text-sm focus:border-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
             disabled={postLoading}
           />
           <div className="mt-2 flex items-center justify-between">
@@ -203,7 +203,7 @@ function FeedContent() {
                 !newPostContent.trim() ||
                 charCount > MAX_POST_LENGTH
               }
-              className="rounded-lg bg-primary-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-primary-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {postLoading ? "Posting..." : "Post"}
             </button>
@@ -257,7 +257,7 @@ function FeedContent() {
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/profile/${post.author_address}`}
-                          className="text-sm font-medium text-primary-700 hover:text-primary-800 hover:underline"
+                          className="text-sm font-medium text-primary-700 hover:text-primary-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 rounded"
                         >
                           {authorDisplayMap[post.author_address] ||
                             truncateAddress(post.author_address)}
@@ -276,7 +276,7 @@ function FeedContent() {
                         <button
                           onClick={() => handleDeletePost(post.id)}
                           disabled={deletingId === post.id}
-                          className="ml-4 shrink-0 rounded-md px-3 py-1.5 text-xs font-medium text-error-600 transition-colors hover:bg-error-50 focus:outline-none focus:ring-2 focus:ring-error-600 focus:ring-offset-2 disabled:opacity-50"
+                          className="ml-4 shrink-0 rounded-md px-3 py-1.5 text-xs font-medium text-error-600 transition-colors hover:bg-error-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:opacity-50"
                           aria-label={`Delete post ${post.id}`}
                         >
                           {deletingId === post.id ? "Deleting..." : "Delete"}
@@ -293,7 +293,7 @@ function FeedContent() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Previous
                 </button>
@@ -305,7 +305,7 @@ function FeedContent() {
                     setPage((p) => Math.min(totalPages, p + 1))
                   }
                   disabled={page >= totalPages}
-                  className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Next
                 </button>
