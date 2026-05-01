@@ -1,11 +1,12 @@
 /**
- * IPFS Service — stub implementation.
+ * IPFS Service — Pinata implementation with in-memory fallback.
  *
- * In production this would connect to an IPFS node (e.g. via ipfs-http-client
- * or a pinning service like Pinata). The stub returns a deterministic CID so
- * the rest of the application can be developed and tested without a running
- * IPFS daemon.
+ * When PINATA_JWT and PINATA_GATEWAY are set, files are uploaded to Pinata
+ * and served via the Pinata gateway. Otherwise, falls back to an in-memory
+ * store for local development.
  */
+
+import { PinataSDK } from "pinata";
 
 /** Maximum file size in bytes (default 5 MB). */
 export const MAX_FILE_SIZE = parseInt(
@@ -39,29 +40,89 @@ export class UnsupportedFileTypeError extends Error {
   }
 }
 
+export class CIDNotFoundError extends Error {
+  code = "NOT_FOUND";
+  constructor(cid: string) {
+    super(`Content not found for CID: ${cid}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Pinata client (initialized lazily, only when credentials are available)
+// ---------------------------------------------------------------------------
+
+const PINATA_JWT = process.env.PINATA_JWT || "";
+const PINATA_GATEWAY = process.env.PINATA_GATEWAY || "";
+
+function isPinataConfigured(): boolean {
+  return PINATA_JWT.length > 0 && PINATA_GATEWAY.length > 0;
+}
+
+let pinataClient: PinataSDK | null = null;
+
+function getPinata(): PinataSDK {
+  if (!pinataClient) {
+    pinataClient = new PinataSDK({
+      pinataJwt: PINATA_JWT,
+      pinataGateway: PINATA_GATEWAY,
+    });
+  }
+  return pinataClient;
+}
+
+// ---------------------------------------------------------------------------
+// In-memory fallback store (for local dev without Pinata)
+// ---------------------------------------------------------------------------
+
+const ipfsStore = new Map<string, { buffer: Buffer; mimeType: string }>();
+
+// ---------------------------------------------------------------------------
+// Core functions
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate file size and MIME type.
+ */
+function validateFile(buffer: Buffer, mimeType: string): void {
+  if (buffer.length > MAX_FILE_SIZE) {
+    throw new FileTooLargeError(MAX_FILE_SIZE);
+  }
+  if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+    throw new UnsupportedFileTypeError(ALLOWED_MIME_TYPES);
+  }
+}
+
+/**
+ * Map MIME type to a file extension for Pinata uploads.
+ */
+function getExtension(mimeType: string): string {
+  switch (mimeType) {
+    case "image/jpeg": return "jpg";
+    case "image/png": return "png";
+    case "application/pdf": return "pdf";
+    default: return "bin";
+  }
+}
+
 /**
  * Upload a buffer to IPFS and return the resulting CID.
- *
- * @param buffer   File contents
- * @param mimeType MIME type of the file
- * @returns The IPFS content identifier (CID)
  */
 export async function uploadToIPFS(
   buffer: Buffer,
   mimeType: string
 ): Promise<string> {
-  // Validate file size
-  if (buffer.length > MAX_FILE_SIZE) {
-    throw new FileTooLargeError(MAX_FILE_SIZE);
+  validateFile(buffer, mimeType);
+
+  if (isPinataConfigured()) {
+    const pinata = getPinata();
+    const file = new File([buffer], `upload.${getExtension(mimeType)}`, {
+      type: mimeType,
+    });
+    const result = await pinata.upload.public.file(file);
+    return result.cid;
   }
 
-  // Validate MIME type
-  if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
-    throw new UnsupportedFileTypeError(ALLOWED_MIME_TYPES);
-  }
-
-  // --- Stub: in production, upload to IPFS and return real CID ---
-  // For now, generate a deterministic fake CID from the buffer content.
+  // Fallback: deterministic fake CID
   const crypto = await import("crypto");
   const hash = crypto.createHash("sha256").update(buffer).digest("hex");
   return `Qm${hash.slice(0, 44)}`;
@@ -69,10 +130,6 @@ export async function uploadToIPFS(
 
 /**
  * Upload an image to IPFS. Validates that the MIME type is an allowed image type.
- *
- * @param buffer   Image file contents
- * @param mimeType MIME type of the image
- * @returns The IPFS content identifier (CID)
  */
 export async function uploadImage(
   buffer: Buffer,
@@ -81,49 +138,62 @@ export async function uploadImage(
   if (!ALLOWED_IMAGE_TYPES.includes(mimeType)) {
     throw new UnsupportedFileTypeError(ALLOWED_IMAGE_TYPES);
   }
-
   return uploadToIPFS(buffer, mimeType);
 }
 
-/** In-memory store for stub implementation (maps CID → { buffer, mimeType }). */
-const ipfsStore = new Map<string, { buffer: Buffer; mimeType: string }>();
-
 /**
  * Upload a buffer to IPFS and store it for later retrieval.
- * Returns the resulting CID.
- *
- * This wraps `uploadToIPFS` and additionally persists the content in the
- * in-memory store so that `retrieveFromIPFS` can return it.
- *
- * @param buffer   File contents
- * @param mimeType MIME type of the file
- * @returns The IPFS content identifier (CID)
+ * With Pinata, the file is pinned and retrievable via the gateway.
+ * With the fallback, it's stored in the in-memory map.
  */
 export async function uploadAndStore(
   buffer: Buffer,
   mimeType: string
 ): Promise<string> {
   const cid = await uploadToIPFS(buffer, mimeType);
-  ipfsStore.set(cid, { buffer, mimeType });
-  return cid;
-}
 
-export class CIDNotFoundError extends Error {
-  code = "NOT_FOUND";
-  constructor(cid: string) {
-    super(`Content not found for CID: ${cid}`);
+  if (!isPinataConfigured()) {
+    // Only store in memory for the fallback path
+    ipfsStore.set(cid, { buffer, mimeType });
   }
+
+  return cid;
 }
 
 /**
  * Retrieve file content from IPFS by CID.
- *
- * @param cid The IPFS content identifier
- * @returns An object containing the file buffer and its MIME type
+ * With Pinata, fetches from the gateway. With fallback, reads from memory.
  */
 export async function retrieveFromIPFS(
   cid: string
 ): Promise<{ buffer: Buffer; mimeType: string }> {
+  if (isPinataConfigured()) {
+    try {
+      const pinata = getPinata();
+      const response = await pinata.gateways.public.get(cid);
+
+      // response.data can be a Blob or other types
+      const data = response.data;
+      let buffer: Buffer;
+      let mimeType = response.contentType || "application/octet-stream";
+
+      if (data instanceof Blob) {
+        const arrayBuffer = await data.arrayBuffer();
+        buffer = Buffer.from(arrayBuffer);
+      } else if (typeof data === "string") {
+        buffer = Buffer.from(data, "utf-8");
+      } else {
+        buffer = Buffer.from(JSON.stringify(data), "utf-8");
+        mimeType = "application/json";
+      }
+
+      return { buffer, mimeType };
+    } catch {
+      throw new CIDNotFoundError(cid);
+    }
+  }
+
+  // Fallback: in-memory store
   const entry = ipfsStore.get(cid);
   if (!entry) {
     throw new CIDNotFoundError(cid);
