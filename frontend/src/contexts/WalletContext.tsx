@@ -30,6 +30,7 @@ export interface WalletContextValue {
   signer: JsonRpcSigner | null;
   credentialNFT: Contract | null;
   reputationToken: Contract | null;
+  chainId: number | null;
   jwt: string | null;
   setJwt: (token: string | null) => void;
   isConnecting: boolean;
@@ -46,6 +47,7 @@ const WalletContext = createContext<WalletContextValue>({
   signer: null,
   credentialNFT: null,
   reputationToken: null,
+  chainId: null,
   jwt: null,
   setJwt: () => {},
   isConnecting: false,
@@ -68,6 +70,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [jwt, setJwtState] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [chainId, setChainId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Load JWT from localStorage on mount (client-side only).
@@ -117,11 +120,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         const browserProvider = new BrowserProvider(window.ethereum!);
         const walletSigner = await browserProvider.getSigner();
         const walletAddress = await walletSigner.getAddress();
+        const network = await browserProvider.getNetwork();
 
         if (!cancelled) {
           setProvider(browserProvider);
           setSigner(walletSigner);
           setAddress(walletAddress);
+          setChainId(Number(network.chainId));
           setIsSessionLoading(false);
         }
       } catch {
@@ -205,10 +210,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       const browserProvider = new BrowserProvider(window.ethereum);
       const walletSigner = await browserProvider.getSigner();
       const walletAddress = await walletSigner.getAddress();
+      const network = await browserProvider.getNetwork();
 
       setProvider(browserProvider);
       setSigner(walletSigner);
       setAddress(walletAddress);
+      setChainId(Number(network.chainId));
     } catch (err: unknown) {
       const message = getErrorMessage(err);
       setError(message);
@@ -221,6 +228,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setAddress(null);
     setProvider(null);
     setSigner(null);
+    setChainId(null);
     setJwt(null);
     setError(null);
   }, [setJwt]);
@@ -239,9 +247,22 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    const handleChainChanged = () => {
-      // Reload the page on chain change as recommended by MetaMask
-      window.location.reload();
+    const handleChainChanged = (...args: unknown[]) => {
+      const hexChainId = args[0] as string;
+      const newChainId = parseInt(hexChainId, 16);
+      setChainId(newChainId);
+
+      // Re-create provider and signer for the new chain
+      if (window.ethereum) {
+        const browserProvider = new BrowserProvider(window.ethereum);
+        setProvider(browserProvider);
+        browserProvider.getSigner().then((walletSigner) => {
+          setSigner(walletSigner);
+        }).catch(() => {
+          // If signer retrieval fails, clear signer
+          setSigner(null);
+        });
+      }
     };
 
     window.ethereum.on("accountsChanged", handleAccountsChanged);
@@ -260,6 +281,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       signer,
       credentialNFT,
       reputationToken,
+      chainId,
       jwt,
       setJwt,
       isConnecting,
@@ -274,6 +296,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       signer,
       credentialNFT,
       reputationToken,
+      chainId,
       jwt,
       setJwt,
       isConnecting,

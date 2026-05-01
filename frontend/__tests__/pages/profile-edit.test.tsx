@@ -61,13 +61,14 @@ describe("ProfileEditPage", () => {
     mockWalletState = {
       address: "0x1234567890abcdef1234567890abcdef12345678",
       jwt: "test-jwt",
+      isSessionLoading: false,
     };
     mockGetProfile.mockResolvedValue(sampleProfile);
     mockUpdateProfile.mockResolvedValue(sampleProfile);
   });
 
   it("redirects to /login when not authenticated", () => {
-    mockWalletState = { address: null, jwt: null };
+    mockWalletState = { address: null, jwt: null, isSessionLoading: false };
     render(<ProfileEditPage />);
     expect(mockReplace).toHaveBeenCalledWith("/login");
   });
@@ -260,10 +261,10 @@ describe("ProfileEditPage", () => {
     render(<ProfileEditPage />);
 
     await waitFor(() => {
-      expect(screen.getByAltText("Profile")).toBeInTheDocument();
+      expect(screen.getByAltText("Alice profile photo")).toBeInTheDocument();
     });
 
-    const img = screen.getByAltText("Profile");
+    const img = screen.getByAltText("Alice profile photo");
     expect(img).toHaveAttribute(
       "src",
       "https://ipfs.io/ipfs/QmImageCID123"

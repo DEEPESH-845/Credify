@@ -1,21 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, useMemo } from "react";
+import Link from "next/link";
 import { useWallet } from "@/contexts/WalletContext";
 import {
   getFeed,
   createPost,
   deletePost,
+  getProfile,
   PostData,
   ApiRequestError,
 } from "@/lib/api";
+import AuthGuard from "@/components/AuthGuard";
+import PageLayout from "@/components/PageLayout";
+import Skeleton from "@/components/ui/Skeleton";
+import EmptyState from "@/components/ui/EmptyState";
+import { truncateAddress } from "@/lib/utils";
 
 const MAX_POST_LENGTH = 5000;
 
-export default function FeedPage() {
-  const router = useRouter();
-  const { address, jwt, isSessionLoading } = useWallet();
+function FeedContent() {
+  const { address, jwt } = useWallet();
 
   // Feed state
   const [posts, setPosts] = useState<PostData[]>([]);
@@ -25,6 +30,9 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Author display names state
+  const [authorNames, setAuthorNames] = useState<Record<string, string | null>>({});
+
   // New post state
   const [newPostContent, setNewPostContent] = useState("");
   const [postLoading, setPostLoading] = useState(false);
@@ -32,13 +40,6 @@ export default function FeedPage() {
 
   // Delete state
   const [deletingId, setDeletingId] = useState<number | null>(null);
-
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isSessionLoading && !jwt) {
-      router.replace("/login");
-    }
-  }, [jwt, isSessionLoading, router]);
 
   // Fetch feed
   const fetchFeed = useCallback(async () => {
@@ -63,6 +64,53 @@ export default function FeedPage() {
   useEffect(() => {
     fetchFeed();
   }, [fetchFeed]);
+
+  // Resolve author display names when posts change
+  useEffect(() => {
+    if (!jwt || posts.length === 0) return;
+
+    const uniqueAddresses = [...new Set(posts.map((p) => p.author_address))];
+    // Only fetch addresses we don't already have
+    const addressesToFetch = uniqueAddresses.filter(
+      (addr) => !(addr in authorNames)
+    );
+
+    if (addressesToFetch.length === 0) return;
+
+    Promise.all(
+      addressesToFetch.map(async (addr) => {
+        try {
+          const profile = await getProfile(addr, jwt);
+          return { address: addr, name: profile.display_name };
+        } catch {
+          return { address: addr, name: null };
+        }
+      })
+    ).then((results) => {
+      setAuthorNames((prev) => {
+        const updated = { ...prev };
+        for (const r of results) {
+          updated[r.address] = r.name;
+        }
+        return updated;
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [posts, jwt]);
+
+  // Derive author display map from state
+  const authorDisplayMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const post of posts) {
+      const addr = post.author_address;
+      if (authorNames[addr]) {
+        map[addr] = authorNames[addr] as string;
+      } else {
+        map[addr] = truncateAddress(addr);
+      }
+    }
+    return map;
+  }, [posts, authorNames]);
 
   // Create post
   const handleCreatePost = async (e: React.FormEvent) => {
@@ -112,158 +160,170 @@ export default function FeedPage() {
   const totalPages = Math.ceil(total / limit);
   const charCount = newPostContent.length;
 
-  if (!jwt) return null;
-
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="mb-6 text-3xl font-bold text-gray-900">Feed</h1>
+    <>
+      <h1 className="mb-6 text-3xl font-bold text-neutral-900">Feed</h1>
 
-        {/* Create Post Form */}
-        <section className="mb-8 rounded-lg bg-white p-6 shadow-md">
-          <h2 className="mb-4 text-xl font-semibold text-gray-800">
-            Create Post
-          </h2>
-          <form onSubmit={handleCreatePost}>
-            <label htmlFor="post-content" className="sr-only">
-              Post content
-            </label>
-            <textarea
-              id="post-content"
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              placeholder="What's on your mind?"
-              maxLength={MAX_POST_LENGTH}
-              rows={4}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              disabled={postLoading}
-            />
-            <div className="mt-2 flex items-center justify-between">
-              <span
-                className={`text-xs ${
-                  charCount > MAX_POST_LENGTH
-                    ? "text-red-600"
-                    : charCount > MAX_POST_LENGTH * 0.9
-                    ? "text-yellow-600"
-                    : "text-gray-400"
-                }`}
-                aria-label="Character count"
-              >
-                {charCount}/{MAX_POST_LENGTH}
-              </span>
-              <button
-                type="submit"
-                disabled={
-                  postLoading ||
-                  !newPostContent.trim() ||
-                  charCount > MAX_POST_LENGTH
-                }
-                className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {postLoading ? "Posting..." : "Post"}
-              </button>
-            </div>
-          </form>
-          {postError && (
-            <p className="mt-3 text-sm text-red-600" role="alert">
-              {postError}
-            </p>
-          )}
-        </section>
-
-        {/* Error display */}
-        {error && (
-          <div
-            role="alert"
-            className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-          >
-            {error}
+      {/* Create Post Form */}
+      <section className="mb-8 rounded-lg bg-white p-6 shadow-card">
+        <h2 className="mb-4 text-xl font-semibold text-neutral-800">
+          Create Post
+        </h2>
+        <form onSubmit={handleCreatePost}>
+          <label htmlFor="post-content" className="sr-only">
+            Post content
+          </label>
+          <textarea
+            id="post-content"
+            value={newPostContent}
+            onChange={(e) => setNewPostContent(e.target.value)}
+            placeholder="What's on your mind?"
+            maxLength={MAX_POST_LENGTH}
+            rows={4}
+            className="w-full rounded-lg border border-neutral-200 px-4 py-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            disabled={postLoading}
+          />
+          <div className="mt-2 flex items-center justify-between">
+            <span
+              className={`text-xs ${
+                charCount > MAX_POST_LENGTH
+                  ? "text-error-600"
+                  : charCount > MAX_POST_LENGTH * 0.9
+                  ? "text-yellow-600"
+                  : "text-neutral-400"
+              }`}
+              aria-label="Character count"
+            >
+              {charCount}/{MAX_POST_LENGTH}
+            </span>
+            <button
+              type="submit"
+              disabled={
+                postLoading ||
+                !newPostContent.trim() ||
+                charCount > MAX_POST_LENGTH
+              }
+              className="rounded-lg bg-primary-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {postLoading ? "Posting..." : "Post"}
+            </button>
           </div>
+        </form>
+        {postError && (
+          <p className="mt-3 text-sm text-error-600" role="alert">
+            {postError}
+          </p>
         )}
+      </section>
 
-        {/* Feed Posts */}
-        <section className="rounded-lg bg-white p-6 shadow-md">
-          <h2 className="mb-4 text-xl font-semibold text-gray-800">
-            Recent Posts
-          </h2>
+      {/* Error display */}
+      {error && (
+        <div
+          role="alert"
+          className="mb-6 rounded-md border border-error-100 bg-error-50 p-4 text-sm text-error-700"
+        >
+          {error}
+        </div>
+      )}
 
-          {loading ? (
-            <div className="flex flex-col items-center py-8">
-              <div
-                className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"
-                role="status"
-                aria-label="Loading"
-              />
-              <p className="mt-3 text-sm text-gray-500">Loading feed...</p>
-            </div>
-          ) : posts.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-500">
-              No posts yet. Be the first to share something!
-            </p>
-          ) : (
-            <>
-              <ul className="divide-y divide-gray-200" role="list">
-                {posts.map((post) => (
-                  <li key={post.id} className="py-4">
-                    <div className="flex items-start justify-between">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-gray-900">
-                            {post.author_address}
-                          </p>
-                          <span className="text-xs text-gray-400">
-                            {new Date(post.created_at).toLocaleString()}
-                          </span>
-                        </div>
-                        <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">
-                          {post.content}
-                        </p>
-                      </div>
-                      {address &&
-                        post.author_address.toLowerCase() ===
-                          address.toLowerCase() && (
-                          <button
-                            onClick={() => handleDeletePost(post.id)}
-                            disabled={deletingId === post.id}
-                            className="ml-4 shrink-0 rounded-md px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
-                            aria-label={`Delete post ${post.id}`}
-                          >
-                            {deletingId === post.id ? "Deleting..." : "Delete"}
-                          </button>
-                        )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+      {/* Feed Posts */}
+      <section className="rounded-lg bg-white p-6 shadow-card">
+        <h2 className="mb-4 text-xl font-semibold text-neutral-800">
+          Recent Posts
+        </h2>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4">
-                  <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page <= 1}
-                    className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-sm text-gray-600">
-                    Page {page} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() =>
-                      setPage((p) => Math.min(totalPages, p + 1))
-                    }
-                    disabled={page >= totalPages}
-                    className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Next
-                  </button>
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="py-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-20" />
                 </div>
-              )}
-            </>
-          )}
-        </section>
-      </div>
-    </main>
+                <Skeleton className="h-4 w-full mb-1" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            ))}
+          </div>
+        ) : posts.length === 0 ? (
+          <EmptyState message="No posts yet. Be the first to share something!" />
+        ) : (
+          <>
+            <ul className="divide-y divide-neutral-200" role="list">
+              {posts.map((post) => (
+                <li key={post.id} className="py-4">
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/profile/${post.author_address}`}
+                          className="text-sm font-medium text-primary-700 hover:text-primary-800 hover:underline"
+                        >
+                          {authorDisplayMap[post.author_address] ||
+                            truncateAddress(post.author_address)}
+                        </Link>
+                        <span className="text-xs text-neutral-400">
+                          {new Date(post.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">
+                        {post.content}
+                      </p>
+                    </div>
+                    {address &&
+                      post.author_address.toLowerCase() ===
+                        address.toLowerCase() && (
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          disabled={deletingId === post.id}
+                          className="ml-4 shrink-0 rounded-md px-3 py-1.5 text-xs font-medium text-error-600 transition-colors hover:bg-error-50 focus:outline-none focus:ring-2 focus:ring-error-600 focus:ring-offset-2 disabled:opacity-50"
+                          aria-label={`Delete post ${post.id}`}
+                        >
+                          {deletingId === post.id ? "Deleting..." : "Delete"}
+                        </button>
+                      )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between border-t border-neutral-200 pt-4">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-neutral-600">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() =>
+                    setPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={page >= totalPages}
+                  className="rounded-md border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+    </>
+  );
+}
+
+export default function FeedPage() {
+  return (
+    <AuthGuard>
+      <PageLayout>
+        <FeedContent />
+      </PageLayout>
+    </AuthGuard>
   );
 }

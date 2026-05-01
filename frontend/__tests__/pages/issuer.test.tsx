@@ -7,9 +7,10 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 
 // Mock next/navigation
+const mockReplace = jest.fn();
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
-    replace: jest.fn(),
+    replace: mockReplace,
     push: jest.fn(),
   }),
 }));
@@ -90,6 +91,8 @@ describe("IssuerDashboardPage", () => {
     mockWalletState = {
       address: "0xIssuerAddress",
       jwt: "mock-jwt-token",
+      isSessionLoading: false,
+      chainId: 31337,
       credentialNFT: {
         mintCredential: mockMintCredential,
         interface: {
@@ -125,23 +128,19 @@ describe("IssuerDashboardPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows error when wallet is not connected", async () => {
+  it("redirects to /login when wallet is not connected", () => {
     mockWalletState = {
       address: null,
       jwt: null,
       credentialNFT: null,
+      isSessionLoading: false,
+      chainId: null,
     };
 
-    const user = userEvent.setup();
     render(<IssuerDashboardPage />);
 
-    await user.click(
-      screen.getByRole("button", { name: "Issue Credential" })
-    );
-
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Please connect your wallet and authenticate first."
-    );
+    // AuthGuard redirects to /login when jwt is null
+    expect(mockReplace).toHaveBeenCalledWith("/login");
   });
 
   it("shows error when holder address is empty", async () => {
@@ -531,6 +530,8 @@ describe("IssuerDashboardPage", () => {
       address: "0xIssuerAddress",
       jwt: "mock-jwt-token",
       credentialNFT: null,
+      isSessionLoading: false,
+      chainId: 31337,
     };
 
     const user = userEvent.setup();

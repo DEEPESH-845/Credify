@@ -60,7 +60,7 @@ export default function EndorseButton({
         return;
       }
 
-      await tx.execute(async () => {
+      const result = await tx.execute(async () => {
         const endorseTx = await reputationToken.endorse(
           endorsedAddress,
           trimmedSkill
@@ -68,12 +68,14 @@ export default function EndorseButton({
         await endorseTx.wait();
       });
 
-      // On success, reset form and notify parent
-      if (tx.step !== "error") {
+      // Use return value instead of tx.step to avoid stale closure
+      if (result !== null) {
+        // Success: reset form and notify parent
         setSkillId("");
         setShowForm(false);
         onEndorsed?.();
       }
+      // Failure (result === null): retain form state for retry
     },
     [reputationToken, address, endorsedAddress, skillId, tx, onEndorsed]
   );

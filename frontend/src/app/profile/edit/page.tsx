@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/contexts/WalletContext";
 import {
@@ -10,6 +10,9 @@ import {
   ProfileData,
   ApiRequestError,
 } from "@/lib/api";
+import AuthGuard from "@/components/AuthGuard";
+import PageLayout from "@/components/PageLayout";
+import { truncateAddress } from "@/lib/utils";
 
 const IPFS_GATEWAY =
   process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://ipfs.io/ipfs";
@@ -41,9 +44,9 @@ function validateForm(fields: {
   return errors;
 }
 
-export default function ProfileEditPage() {
+function ProfileEditContent() {
   const router = useRouter();
-  const { address, jwt, isSessionLoading } = useWallet();
+  const { address, jwt } = useWallet();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -57,13 +60,6 @@ export default function ProfileEditPage() {
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [profileImageCid, setProfileImageCid] = useState<string | null>(null);
-
-  // Redirect to /login if not authenticated
-  useEffect(() => {
-    if (!isSessionLoading && (!jwt || !address)) {
-      router.replace("/login");
-    }
-  }, [jwt, address, isSessionLoading, router]);
 
   // Load current profile on mount
   const loadProfile = useCallback(async () => {
@@ -167,245 +163,255 @@ export default function ProfileEditPage() {
     }
   };
 
-  if (!jwt || !address) {
-    return null;
-  }
-
-  if (loading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-3">
-          <div
-            className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"
-            role="status"
-            aria-label="Loading"
-          />
-          <p className="text-sm text-gray-600">Loading profile...</p>
-        </div>
-      </main>
-    );
-  }
+  // Derive profile image alt text
+  const profileImageAlt = useMemo(() => {
+    if (displayName) {
+      return `${displayName} profile photo`;
+    }
+    return `${truncateAddress(address || "")} profile photo`;
+  }, [displayName, address]);
 
   const profileImageUrl = profileImageCid
     ? `${IPFS_GATEWAY}/${profileImageCid}`
     : null;
 
-  return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-2xl">
-        <div className="rounded-lg bg-white p-6 shadow-md">
-          <h1 className="text-2xl font-bold text-gray-900">Edit Profile</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Update your professional profile information
-          </p>
-
-          {successMessage && (
-            <div
-              role="status"
-              className="mt-4 rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-700"
-            >
-              {successMessage}
-            </div>
-          )}
-
-          {errorMessage && (
-            <div
-              role="alert"
-              className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-            >
-              {errorMessage}
-            </div>
-          )}
-
-          {/* Profile Image Section */}
-          <div className="mt-6 border-b border-gray-200 pb-6">
-            <h2 className="text-sm font-semibold text-gray-700">
-              Profile Image
-            </h2>
-            <div className="mt-3 flex items-center gap-4">
-              {profileImageUrl ? (
-                <img
-                  src={profileImageUrl}
-                  alt="Profile"
-                  className="h-20 w-20 rounded-full object-cover border-2 border-gray-200"
-                />
-              ) : (
-                <div
-                  className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-100 text-xl font-bold text-blue-600 border-2 border-gray-200"
-                  aria-label="Default avatar"
-                >
-                  {displayName?.[0]?.toUpperCase() || address[0]?.toUpperCase() || "?"}
-                </div>
-              )}
-              <div>
-                <label
-                  htmlFor="profile-image-upload"
-                  className={`inline-flex cursor-pointer items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 ${
-                    uploading ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                >
-                  {uploading ? "Uploading..." : "Change Image"}
-                  <input
-                    id="profile-image-upload"
-                    type="file"
-                    accept="image/jpeg,image/png"
-                    onChange={handleImageUpload}
-                    disabled={uploading}
-                    className="sr-only"
-                  />
-                </label>
-                <p className="mt-1 text-xs text-gray-500">
-                  JPEG or PNG format
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Profile Form */}
-          <form onSubmit={handleSave} className="mt-6 space-y-5">
-            {/* Display Name */}
-            <div>
-              <label
-                htmlFor="display-name"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Display Name
-              </label>
-              <input
-                id="display-name"
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                maxLength={100}
-                className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  formErrors.display_name
-                    ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                    : "border-gray-300"
-                }`}
-                placeholder="Your display name"
-              />
-              <div className="mt-1 flex justify-between">
-                {formErrors.display_name ? (
-                  <p className="text-xs text-red-600">
-                    {formErrors.display_name}
-                  </p>
-                ) : (
-                  <span />
-                )}
-                <p className="text-xs text-gray-400">
-                  {displayName.length}/100
-                </p>
-              </div>
-            </div>
-
-            {/* Headline */}
-            <div>
-              <label
-                htmlFor="headline"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Headline
-              </label>
-              <input
-                id="headline"
-                type="text"
-                value={headline}
-                onChange={(e) => setHeadline(e.target.value)}
-                maxLength={200}
-                className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  formErrors.headline
-                    ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                    : "border-gray-300"
-                }`}
-                placeholder="e.g. Senior Blockchain Developer"
-              />
-              <div className="mt-1 flex justify-between">
-                {formErrors.headline ? (
-                  <p className="text-xs text-red-600">
-                    {formErrors.headline}
-                  </p>
-                ) : (
-                  <span />
-                )}
-                <p className="text-xs text-gray-400">
-                  {headline.length}/200
-                </p>
-              </div>
-            </div>
-
-            {/* Bio */}
-            <div>
-              <label
-                htmlFor="bio"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Bio
-              </label>
-              <textarea
-                id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={4}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Tell others about yourself..."
-              />
-            </div>
-
-            {/* Location */}
-            <div>
-              <label
-                htmlFor="location"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Location
-              </label>
-              <input
-                id="location"
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                maxLength={100}
-                className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  formErrors.location
-                    ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                    : "border-gray-300"
-                }`}
-                placeholder="e.g. San Francisco, CA"
-              />
-              <div className="mt-1 flex justify-between">
-                {formErrors.location ? (
-                  <p className="text-xs text-red-600">
-                    {formErrors.location}
-                  </p>
-                ) : (
-                  <span />
-                )}
-                <p className="text-xs text-gray-400">
-                  {location.length}/100
-                </p>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-              <button
-                type="button"
-                onClick={() => router.push(`/profile/${address}`)}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-primary-600"
+            role="status"
+            aria-label="Loading"
+          />
+          <p className="text-sm text-neutral-600">Loading profile...</p>
         </div>
       </div>
-    </main>
+    );
+  }
+
+  return (
+    <div className="rounded-lg bg-white p-6 shadow-card">
+      <h1 className="text-2xl font-bold text-neutral-900">Edit Profile</h1>
+      <p className="mt-1 text-sm text-neutral-600">
+        Update your professional profile information
+      </p>
+
+      {successMessage && (
+        <div
+          role="status"
+          className="mt-4 rounded-md border border-success-100 bg-success-50 p-4 text-sm text-success-700"
+        >
+          {successMessage}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div
+          role="alert"
+          className="mt-4 rounded-md border border-error-100 bg-error-50 p-4 text-sm text-error-700"
+        >
+          {errorMessage}
+        </div>
+      )}
+
+      {/* Profile Image Section */}
+      <div className="mt-6 border-b border-neutral-200 pb-6">
+        <h2 className="text-sm font-semibold text-neutral-700">
+          Profile Image
+        </h2>
+        <div className="mt-3 flex items-center gap-4">
+          {profileImageUrl ? (
+            <img
+              src={profileImageUrl}
+              alt={profileImageAlt}
+              className="h-20 w-20 rounded-full object-cover border-2 border-neutral-200"
+            />
+          ) : (
+            <div
+              className="flex h-20 w-20 items-center justify-center rounded-full bg-primary-100 text-xl font-bold text-primary-600 border-2 border-neutral-200"
+              aria-label="Default avatar"
+            >
+              {displayName?.[0]?.toUpperCase() || address?.[0]?.toUpperCase() || "?"}
+            </div>
+          )}
+          <div>
+            <label
+              htmlFor="profile-image-upload"
+              className={`inline-flex cursor-pointer items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2 ${
+                uploading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {uploading ? "Uploading..." : "Change Image"}
+              <input
+                id="profile-image-upload"
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                className="sr-only"
+              />
+            </label>
+            <p className="mt-1 text-xs text-neutral-500">
+              JPEG or PNG format
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Form */}
+      <form onSubmit={handleSave} className="mt-6 space-y-5">
+        {/* Display Name */}
+        <div>
+          <label
+            htmlFor="display-name"
+            className="block text-sm font-medium text-neutral-700"
+          >
+            Display Name
+          </label>
+          <input
+            id="display-name"
+            type="text"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            maxLength={100}
+            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+              formErrors.display_name
+                ? "border-error-300 focus:ring-error-500 focus:border-error-500"
+                : "border-neutral-300"
+            }`}
+            placeholder="Your display name"
+          />
+          <div className="mt-1 flex justify-between">
+            {formErrors.display_name ? (
+              <p className="text-xs text-error-600">
+                {formErrors.display_name}
+              </p>
+            ) : (
+              <span />
+            )}
+            <p className="text-xs text-neutral-400">
+              {displayName.length}/100
+            </p>
+          </div>
+        </div>
+
+        {/* Headline */}
+        <div>
+          <label
+            htmlFor="headline"
+            className="block text-sm font-medium text-neutral-700"
+          >
+            Headline
+          </label>
+          <input
+            id="headline"
+            type="text"
+            value={headline}
+            onChange={(e) => setHeadline(e.target.value)}
+            maxLength={200}
+            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+              formErrors.headline
+                ? "border-error-300 focus:ring-error-500 focus:border-error-500"
+                : "border-neutral-300"
+            }`}
+            placeholder="e.g. Senior Blockchain Developer"
+          />
+          <div className="mt-1 flex justify-between">
+            {formErrors.headline ? (
+              <p className="text-xs text-error-600">
+                {formErrors.headline}
+              </p>
+            ) : (
+              <span />
+            )}
+            <p className="text-xs text-neutral-400">
+              {headline.length}/200
+            </p>
+          </div>
+        </div>
+
+        {/* Bio */}
+        <div>
+          <label
+            htmlFor="bio"
+            className="block text-sm font-medium text-neutral-700"
+          >
+            Bio
+          </label>
+          <textarea
+            id="bio"
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            rows={4}
+            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            placeholder="Tell others about yourself..."
+          />
+        </div>
+
+        {/* Location */}
+        <div>
+          <label
+            htmlFor="location"
+            className="block text-sm font-medium text-neutral-700"
+          >
+            Location
+          </label>
+          <input
+            id="location"
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            maxLength={100}
+            className={`mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+              formErrors.location
+                ? "border-error-300 focus:ring-error-500 focus:border-error-500"
+                : "border-neutral-300"
+            }`}
+            placeholder="e.g. San Francisco, CA"
+          />
+          <div className="mt-1 flex justify-between">
+            {formErrors.location ? (
+              <p className="text-xs text-error-600">
+                {formErrors.location}
+              </p>
+            ) : (
+              <span />
+            )}
+            <p className="text-xs text-neutral-400">
+              {location.length}/100
+            </p>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3 pt-2">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push(`/profile/${address}`)}
+            className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export default function ProfileEditPage() {
+  return (
+    <AuthGuard>
+      <PageLayout maxWidth="max-w-2xl">
+        <ProfileEditContent />
+      </PageLayout>
+    </AuthGuard>
   );
 }

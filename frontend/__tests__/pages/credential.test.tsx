@@ -52,6 +52,7 @@ describe("CredentialVerificationPage", () => {
     jest.clearAllMocks();
     mockWalletState = {
       address: "0xabc",
+      isSessionLoading: false,
       credentialNFT: {
         getCredential: mockGetCredential,
       },
@@ -137,10 +138,11 @@ describe("CredentialVerificationPage", () => {
     render(<CredentialVerificationPage />);
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Token does not exist"
-      );
+      expect(screen.getByText("Token does not exist")).toBeInTheDocument();
     });
+
+    // ErrorState component renders a Retry button
+    expect(screen.getByText("Retry")).toBeInTheDocument();
   });
 
   it("displays generic error for non-Error exceptions", async () => {
@@ -149,22 +151,40 @@ describe("CredentialVerificationPage", () => {
     render(<CredentialVerificationPage />);
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "An unexpected error occurred during the transaction."
-      );
+      expect(
+        screen.getByText(
+          "An unexpected error occurred during the transaction."
+        )
+      ).toBeInTheDocument();
     });
   });
 
-  it("shows 'Credential not found' when contract is not available", async () => {
+  it("shows loading state when contract is not available and session is loading", () => {
     mockWalletState = {
       address: "0xabc",
+      isSessionLoading: true,
+      credentialNFT: null,
+    };
+
+    render(<CredentialVerificationPage />);
+
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.getByText("Verifying credential on blockchain...")).toBeInTheDocument();
+  });
+
+  it("shows wallet connection required when contract is not available and session is done loading", async () => {
+    mockWalletState = {
+      address: "0xabc",
+      isSessionLoading: false,
       credentialNFT: null,
     };
 
     render(<CredentialVerificationPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("Credential not found")).toBeInTheDocument();
+      expect(
+        screen.getByText("Wallet connection required to verify credentials.")
+      ).toBeInTheDocument();
     });
   });
 

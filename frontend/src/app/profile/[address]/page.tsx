@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { useWallet } from "@/contexts/WalletContext";
 import { useTransactionToast } from "@/contexts/TransactionContext";
 import { parseTransactionError } from "@/lib/transaction-utils";
 import { getProfile, ProfileData, ApiRequestError } from "@/lib/api";
+import { truncateAddress } from "@/lib/utils";
+import PageLayout from "@/components/PageLayout";
+import Skeleton from "@/components/ui/Skeleton";
+import ErrorState from "@/components/ui/ErrorState";
 import TransactionStatus from "@/components/TransactionStatus";
 import EndorseButton from "@/components/EndorseButton";
 
@@ -30,7 +35,7 @@ const IPFS_GATEWAY = process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://ipfs.io/ip
 export default function ProfilePage() {
   const params = useParams();
   const profileAddress = params.address as string;
-  const { jwt, credentialNFT, reputationToken, isSessionLoading } = useWallet();
+  const { address, jwt, credentialNFT, reputationToken, isSessionLoading } = useWallet();
   const toast = useTransactionToast();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -62,18 +67,19 @@ export default function ProfilePage() {
 
     try {
       const tokenIds: bigint[] = await credentialNFT.getHolderCredentials(profileAddress);
-      const credentialList: CredentialDisplay[] = [];
 
-      for (const tokenId of tokenIds) {
-        const data: CredentialData = await credentialNFT.getCredential(tokenId);
-        credentialList.push({
-          tokenId: tokenId.toString(),
-          credentialType: data.credentialType,
-          issuer: data.issuer,
-          issuanceDate: new Date(Number(data.issuanceTimestamp) * 1000).toLocaleDateString(),
-          ipfsCID: data.ipfsCID,
-        });
-      }
+      const credentialList: CredentialDisplay[] = await Promise.all(
+        tokenIds.map(async (tokenId) => {
+          const data: CredentialData = await credentialNFT.getCredential(tokenId);
+          return {
+            tokenId: tokenId.toString(),
+            credentialType: data.credentialType,
+            issuer: data.issuer,
+            issuanceDate: new Date(Number(data.issuanceTimestamp) * 1000).toLocaleDateString(),
+            ipfsCID: data.ipfsCID,
+          };
+        })
+      );
 
       setCredentials(credentialList);
     } catch (err: unknown) {
@@ -149,60 +155,106 @@ export default function ProfilePage() {
     };
   }, [isSessionLoading, fetchProfile, fetchCredentials, fetchReputation]);
 
+  // Memoize profile image URL, recomputed only when profile_image_cid changes
+  const profileImageUrl = useMemo(() => {
+    if (!profile?.profile_image_cid) return null;
+    return `${IPFS_GATEWAY}/${profile.profile_image_cid}`;
+  }, [profile?.profile_image_cid]);
+
+  // Determine if this is the user's own profile (case-insensitive)
+  const isOwnProfile = useMemo(() => {
+    if (!address || !profileAddress) return false;
+    return address.toLowerCase() === profileAddress.toLowerCase();
+  }, [address, profileAddress]);
+
+  // Derive alt text for profile image
+  const profileImageAlt = useMemo(() => {
+    if (profile?.display_name) {
+      return `${profile.display_name} profile photo`;
+    }
+    return `${truncateAddress(profileAddress)} profile photo`;
+  }, [profile?.display_name, profileAddress]);
+
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <TransactionStatus message="Loading profile..." />
-      </main>
+      <PageLayout>
+        <div role="status" aria-label="Loading profile">
+          <span className="sr-only">Loading profile...</span>
+          {/* Skeleton layout: avatar circle, name line, headline line, bio block */}
+          <section className="rounded-lg bg-white p-6 shadow-card">
+            <div className="flex items-start gap-6">
+              <Skeleton className="h-24 w-24 rounded-full flex-shrink-0" />
+              <div className="flex-1 min-w-0 space-y-3">
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-5 w-64" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-80" />
+              </div>
+            </div>
+            <div className="mt-4 border-t border-neutral-100 pt-4 space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          </section>
+        </div>
+      </PageLayout>
     );
   }
 
   if (error) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
-        <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md text-center">
-          <div
-            role="alert"
-            className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-          >
-            {error}
-          </div>
-        </div>
-      </main>
+      <PageLayout>
+        <ErrorState message={error} onRetry={fetchProfile} />
+      </PageLayout>
     );
   }
 
   if (!profile) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
-        <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md text-center">
-          <p className="text-gray-600">Profile not found</p>
+      <PageLayout>
+        <div className="w-full max-w-md mx-auto rounded-lg bg-white p-8 shadow-card text-center">
+          <p className="text-neutral-600">Profile not found</p>
         </div>
-      </main>
+      </PageLayout>
     );
   }
 
-  const profileImageUrl = profile.profile_image_cid
-    ? `${IPFS_GATEWAY}/${profile.profile_image_cid}`
-    : null;
-
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-3xl space-y-6">
+    <PageLayout>
+      <div className="space-y-6">
+        {/* Navigation links */}
+        <div className="flex items-center justify-between">
+          <Link
+            href="/feed"
+            className="text-sm text-primary-600 hover:text-primary-700 hover:underline"
+          >
+            ← Back to Feed
+          </Link>
+          {isOwnProfile && (
+            <Link
+              href="/profile/edit"
+              className="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            >
+              Edit Profile
+            </Link>
+          )}
+        </div>
+
         {/* Profile Card */}
-        <section className="rounded-lg bg-white p-6 shadow-md">
+        <section className="rounded-lg bg-white p-6 shadow-card">
           <div className="flex items-start gap-6">
             {/* Profile Image */}
             <div className="flex-shrink-0">
               {profileImageUrl ? (
                 <img
                   src={profileImageUrl}
-                  alt={`${profile.display_name || "User"} profile`}
-                  className="h-24 w-24 rounded-full object-cover border-2 border-gray-200"
+                  alt={profileImageAlt}
+                  className="h-24 w-24 rounded-full object-cover border-2 border-neutral-200"
                 />
               ) : (
                 <div
-                  className="flex h-24 w-24 items-center justify-center rounded-full bg-blue-100 text-2xl font-bold text-blue-600 border-2 border-gray-200"
+                  className="flex h-24 w-24 items-center justify-center rounded-full bg-primary-100 text-2xl font-bold text-primary-600 border-2 border-neutral-200"
                   aria-label="Default avatar"
                 >
                   {(profile.display_name || profile.wallet_address)?.[0]?.toUpperCase() || "?"}
@@ -212,16 +264,16 @@ export default function ProfilePage() {
 
             {/* Profile Info */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 truncate">
+              <h1 className="text-2xl font-bold text-neutral-900 truncate">
                 {profile.display_name || "Unnamed User"}
               </h1>
               {profile.headline && (
-                <p className="mt-1 text-gray-600 truncate">{profile.headline}</p>
+                <p className="mt-1 text-neutral-600 truncate">{profile.headline}</p>
               )}
               {profile.location && (
-                <p className="mt-1 text-sm text-gray-500">{profile.location}</p>
+                <p className="mt-1 text-sm text-neutral-500">{profile.location}</p>
               )}
-              <p className="mt-2 text-xs text-gray-400 font-mono truncate">
+              <p className="mt-2 text-xs text-neutral-400 font-mono truncate">
                 {profile.wallet_address}
               </p>
             </div>
@@ -229,24 +281,24 @@ export default function ProfilePage() {
 
           {/* Bio */}
           {profile.bio && (
-            <div className="mt-4 border-t border-gray-100 pt-4">
-              <h2 className="text-sm font-semibold text-gray-700">About</h2>
-              <p className="mt-1 text-sm text-gray-600 whitespace-pre-wrap">{profile.bio}</p>
+            <div className="mt-4 border-t border-neutral-100 pt-4">
+              <h2 className="text-sm font-semibold text-neutral-700">About</h2>
+              <p className="mt-1 text-sm text-neutral-600 whitespace-pre-wrap">{profile.bio}</p>
             </div>
           )}
         </section>
 
         {/* Reputation Section */}
-        <section className="rounded-lg bg-white p-6 shadow-md">
-          <h2 className="text-lg font-semibold text-gray-900">Reputation</h2>
+        <section className="rounded-lg bg-white p-6 shadow-card">
+          <h2 className="text-lg font-semibold text-neutral-900">Reputation</h2>
           {blockchainLoading ? (
             <div className="mt-3">
               <TransactionStatus message="Loading reputation from blockchain..." />
             </div>
           ) : (
             <div className="mt-3 flex items-center gap-2">
-              <span className="text-3xl font-bold text-blue-600">{reputationBalance}</span>
-              <span className="text-sm text-gray-500">Reputation Tokens</span>
+              <span className="text-3xl font-bold text-primary-600">{reputationBalance}</span>
+              <span className="text-sm text-neutral-500">Reputation Tokens</span>
             </div>
           )}
           <EndorseButton
@@ -258,32 +310,32 @@ export default function ProfilePage() {
         </section>
 
         {/* Credentials Section */}
-        <section className="rounded-lg bg-white p-6 shadow-md">
-          <h2 className="text-lg font-semibold text-gray-900">Credentials</h2>
+        <section className="rounded-lg bg-white p-6 shadow-card">
+          <h2 className="text-lg font-semibold text-neutral-900">Credentials</h2>
           {blockchainLoading ? (
             <div className="mt-3">
               <TransactionStatus message="Loading credentials from blockchain..." />
             </div>
           ) : credentials.length === 0 ? (
-            <p className="mt-3 text-sm text-gray-500">No credentials found</p>
+            <p className="mt-3 text-sm text-neutral-500">No credentials found</p>
           ) : (
             <ul className="mt-3 space-y-3">
               {credentials.map((cred) => (
                 <li
                   key={cred.tokenId}
-                  className="rounded-md border border-gray-200 p-4"
+                  className="rounded-md border border-neutral-200 p-4"
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-medium text-gray-900">{cred.credentialType}</h3>
-                      <p className="mt-1 text-xs text-gray-500 font-mono truncate">
+                      <h3 className="font-medium text-neutral-900">{cred.credentialType}</h3>
+                      <p className="mt-1 text-xs text-neutral-500 font-mono truncate">
                         Issuer: {cred.issuer}
                       </p>
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-1 text-xs text-neutral-500">
                         Issued: {cred.issuanceDate}
                       </p>
                     </div>
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                    <span className="inline-flex items-center rounded-full bg-success-100 px-2.5 py-0.5 text-xs font-medium text-success-800">
                       Verified
                     </span>
                   </div>
@@ -292,7 +344,7 @@ export default function ProfilePage() {
                       href={`${IPFS_GATEWAY}/${cred.ipfsCID}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-2 inline-block text-xs text-blue-600 hover:underline"
+                      className="mt-2 inline-block text-xs text-primary-600 hover:underline"
                     >
                       View Document
                     </a>
@@ -303,6 +355,6 @@ export default function ProfilePage() {
           )}
         </section>
       </div>
-    </main>
+    </PageLayout>
   );
 }

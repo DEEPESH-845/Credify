@@ -19,11 +19,13 @@ jest.mock("next/navigation", () => ({
 const mockGetFeed = jest.fn();
 const mockCreatePost = jest.fn();
 const mockDeletePost = jest.fn();
+const mockGetProfile = jest.fn();
 
 jest.mock("@/lib/api", () => ({
   getFeed: (...args: unknown[]) => mockGetFeed(...args),
   createPost: (...args: unknown[]) => mockCreatePost(...args),
   deletePost: (...args: unknown[]) => mockDeletePost(...args),
+  getProfile: (...args: unknown[]) => mockGetProfile(...args),
   ApiRequestError: class ApiRequestError extends Error {
     status: number;
     code: string;
@@ -78,12 +80,25 @@ describe("FeedPage", () => {
     mockWalletState = {
       address: "0xabc",
       jwt: "test-jwt",
+      isSessionLoading: false,
     };
     mockGetFeed.mockResolvedValue(emptyFeedResponse);
+    // Default: getProfile returns null display_name so truncated address is shown
+    mockGetProfile.mockImplementation(async (addr: string) => ({
+      id: 1,
+      wallet_address: addr,
+      display_name: null,
+      headline: null,
+      bio: null,
+      location: null,
+      profile_image_cid: null,
+      created_at: "2024-01-01T00:00:00.000Z",
+      updated_at: "2024-01-01T00:00:00.000Z",
+    }));
   });
 
   it("redirects to /login when not authenticated", () => {
-    mockWalletState = { address: null, jwt: null };
+    mockWalletState = { address: null, jwt: null, isSessionLoading: false };
     render(<FeedPage />);
     expect(mockReplace).toHaveBeenCalledWith("/login");
   });
@@ -91,8 +106,10 @@ describe("FeedPage", () => {
   it("shows loading state initially", () => {
     mockGetFeed.mockReturnValue(new Promise(() => {}));
     render(<FeedPage />);
-    expect(screen.getByRole("status")).toBeInTheDocument();
-    expect(screen.getByText("Loading feed...")).toBeInTheDocument();
+    // Skeleton loading state — 3 skeleton post items are rendered
+    // The skeletons use animate-pulse divs, no "Loading feed..." text
+    const skeletons = document.querySelectorAll(".animate-pulse");
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it("displays empty state when there are no posts", async () => {
@@ -115,6 +132,8 @@ describe("FeedPage", () => {
     expect(
       screen.getByText("Excited about Web3 development")
     ).toBeInTheDocument();
+    // Author addresses are shown as truncated or display names
+    // With null display_name, "0xabc" is short so truncateAddress returns it as-is
     expect(screen.getByText("0xabc")).toBeInTheDocument();
     expect(screen.getByText("0xdef")).toBeInTheDocument();
   });
@@ -340,5 +359,48 @@ describe("FeedPage", () => {
 
     expect(screen.queryByText("Previous")).not.toBeInTheDocument();
     expect(screen.queryByText("Next")).not.toBeInTheDocument();
+  });
+
+  it("renders author names as links to profile pages", async () => {
+    mockGetFeed.mockResolvedValue(samplePosts);
+    render(<FeedPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Hello blockchain world!")).toBeInTheDocument();
+    });
+
+    // Author names should be rendered as links
+    const authorLink = screen.getByText("0xabc").closest("a");
+    expect(authorLink).toHaveAttribute("href", "/profile/0xabc");
+
+    const authorLink2 = screen.getByText("0xdef").closest("a");
+    expect(authorLink2).toHaveAttribute("href", "/profile/0xdef");
+  });
+
+  it("displays display_name when available from getProfile", async () => {
+    mockGetFeed.mockResolvedValue(samplePosts);
+    mockGetProfile.mockImplementation(async (addr: string) => ({
+      id: 1,
+      wallet_address: addr,
+      display_name: addr === "0xabc" ? "Alice" : "Bob",
+      headline: null,
+      bio: null,
+      location: null,
+      profile_image_cid: null,
+      created_at: "2024-01-01T00:00:00.000Z",
+      updated_at: "2024-01-01T00:00:00.000Z",
+    }));
+
+    render(<FeedPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Hello blockchain world!")).toBeInTheDocument();
+    });
+
+    // Wait for author names to resolve
+    await waitFor(() => {
+      expect(screen.getByText("Alice")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Bob")).toBeInTheDocument();
   });
 });

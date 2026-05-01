@@ -1,13 +1,30 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useWallet } from "@/contexts/WalletContext";
+
 export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <h1 className="text-4xl font-bold">
-        Blockchain Social Network
-      </h1>
-      <p className="mt-4 text-lg text-gray-600">
-        A professional social network with verifiable credentials on the
-        blockchain.
-      </p>
-    </main>
-  );
+  const { jwt, isSessionLoading } = useWallet();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isSessionLoading) return;
+
+    if (jwt) {
+      router.replace("/feed");
+    } else {
+      router.replace("/login");
+    }
+  }, [jwt, isSessionLoading, router]);
+
+  if (isSessionLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+      </main>
+    );
+  }
+
+  return null;
 }

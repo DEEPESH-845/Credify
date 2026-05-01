@@ -201,6 +201,7 @@ describe("WalletProvider", () => {
       .spyOn(require("ethers"), "BrowserProvider")
       .mockImplementation(() => ({
         getSigner: jest.fn().mockResolvedValue(mockSigner),
+        getNetwork: jest.fn().mockResolvedValue({ chainId: BigInt(31337) }),
       }));
 
     render(

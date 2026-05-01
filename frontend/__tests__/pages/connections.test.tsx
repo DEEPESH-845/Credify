@@ -122,28 +122,30 @@ describe("ConnectionsPage", () => {
     mockWalletState = {
       address: "0xabc",
       jwt: "test-jwt",
+      isSessionLoading: false,
     };
     mockGetConnections.mockResolvedValue(emptyConnectionsResponse);
     mockGetPendingConnections.mockResolvedValue(emptyConnectionsResponse);
   });
 
   it("redirects to /login when not authenticated", () => {
-    mockWalletState = { address: null, jwt: null };
+    mockWalletState = { address: null, jwt: null, isSessionLoading: false };
     render(<ConnectionsPage />);
     expect(mockReplace).toHaveBeenCalledWith("/login");
   });
 
-  it("shows loading state initially", () => {
+  it("shows skeleton loading state initially", () => {
     mockGetConnections.mockReturnValue(new Promise(() => {}));
     render(<ConnectionsPage />);
-    expect(screen.getByRole("status")).toBeInTheDocument();
-    expect(screen.getByText("Loading connections...")).toBeInTheDocument();
+    // Skeleton loading state — 3 skeleton connection items are rendered
+    const skeletons = document.querySelectorAll(".animate-pulse");
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it("displays 'No connections yet' when there are no connections", async () => {
     render(<ConnectionsPage />);
     await waitFor(() => {
-      expect(screen.getByText("No connections yet")).toBeInTheDocument();
+      expect(screen.getByText("No connections yet.")).toBeInTheDocument();
     });
   });
 
@@ -160,6 +162,21 @@ describe("ConnectionsPage", () => {
     expect(screen.getByText("DeFi Researcher")).toBeInTheDocument();
   });
 
+  it("renders accepted connections as clickable profile links", async () => {
+    mockGetConnections.mockResolvedValue(sampleConnections);
+    render(<ConnectionsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Bob")).toBeInTheDocument();
+    });
+
+    const bobLink = screen.getByText("Bob").closest("a");
+    expect(bobLink).toHaveAttribute("href", "/profile/0xdef");
+
+    const charlieLink = screen.getByText("Charlie").closest("a");
+    expect(charlieLink).toHaveAttribute("href", "/profile/0x111");
+  });
+
   it("displays pending requests with accept/decline buttons", async () => {
     mockGetPendingConnections.mockResolvedValue(samplePendingRequests);
     render(<ConnectionsPage />);
@@ -174,10 +191,22 @@ describe("ConnectionsPage", () => {
     expect(screen.getByText("Decline")).toBeInTheDocument();
   });
 
+  it("renders pending request requester as a clickable profile link", async () => {
+    mockGetPendingConnections.mockResolvedValue(samplePendingRequests);
+    render(<ConnectionsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Diana")).toBeInTheDocument();
+    });
+
+    const dianaLink = screen.getByText("Diana").closest("a");
+    expect(dianaLink).toHaveAttribute("href", "/profile/0xpending1");
+  });
+
   it("hides pending section when there are no pending requests", async () => {
     render(<ConnectionsPage />);
     await waitFor(() => {
-      expect(screen.getByText("No connections yet")).toBeInTheDocument();
+      expect(screen.getByText("No connections yet.")).toBeInTheDocument();
     });
     expect(screen.queryByText("Pending Requests")).not.toBeInTheDocument();
   });
@@ -193,7 +222,7 @@ describe("ConnectionsPage", () => {
     render(<ConnectionsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("No connections yet")).toBeInTheDocument();
+      expect(screen.getByText("No connections yet.")).toBeInTheDocument();
     });
 
     const input = screen.getByPlaceholderText("Enter wallet address (0x...)");
@@ -234,7 +263,7 @@ describe("ConnectionsPage", () => {
     render(<ConnectionsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("No connections yet")).toBeInTheDocument();
+      expect(screen.getByText("No connections yet.")).toBeInTheDocument();
     });
 
     const input = screen.getByPlaceholderText("Enter wallet address (0x...)");
@@ -383,7 +412,7 @@ describe("ConnectionsPage", () => {
     render(<ConnectionsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("No connections yet")).toBeInTheDocument();
+      expect(screen.getByText("No connections yet.")).toBeInTheDocument();
     });
 
     expect(
@@ -399,7 +428,7 @@ describe("ConnectionsPage", () => {
       expect(screen.getByText("Charlie")).toBeInTheDocument();
     });
 
-    const img = screen.getByAltText("Charlie avatar");
+    const img = screen.getByAltText("Charlie profile photo");
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute("src", "https://ipfs.io/ipfs/QmImageCID");
   });

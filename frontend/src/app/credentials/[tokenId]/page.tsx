@@ -6,6 +6,9 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useTransactionToast } from "@/contexts/TransactionContext";
 import { parseTransactionError } from "@/lib/transaction-utils";
 import TransactionStatus from "@/components/TransactionStatus";
+import PageLayout from "@/components/PageLayout";
+import ErrorState from "@/components/ui/ErrorState";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface CredentialData {
   credentialType: string;
@@ -30,7 +33,7 @@ const IPFS_GATEWAY =
 export default function CredentialVerificationPage() {
   const params = useParams();
   const tokenId = params.tokenId as string;
-  const { credentialNFT } = useWallet();
+  const { credentialNFT, isSessionLoading } = useWallet();
   const toast = useTransactionToast();
 
   const [credential, setCredential] = useState<CredentialDisplay | null>(null);
@@ -83,116 +86,126 @@ export default function CredentialVerificationPage() {
     }
   }, [credentialNFT, tokenId, toast]);
 
+  // Trigger fetchCredential when credentialNFT becomes available
   useEffect(() => {
-    fetchCredential();
-  }, [fetchCredential]);
+    if (credentialNFT) {
+      fetchCredential();
+    }
+  }, [credentialNFT, fetchCredential]);
+
+  // When credentialNFT is null and session is still loading, show loading state
+  if (credentialNFT === null && isSessionLoading) {
+    return (
+      <PageLayout maxWidth="max-w-2xl">
+        <div className="flex items-center justify-center py-20">
+          <TransactionStatus message="Verifying credential on blockchain..." />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // When credentialNFT is null and session is done loading, wallet is not connected
+  if (credentialNFT === null && !isSessionLoading) {
+    return (
+      <PageLayout maxWidth="max-w-2xl">
+        <EmptyState message="Wallet connection required to verify credentials." />
+      </PageLayout>
+    );
+  }
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <TransactionStatus message="Verifying credential on blockchain..." />
-      </main>
+      <PageLayout maxWidth="max-w-2xl">
+        <div className="flex items-center justify-center py-20">
+          <TransactionStatus message="Verifying credential on blockchain..." />
+        </div>
+      </PageLayout>
     );
   }
 
   if (error) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
-        <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md text-center">
-          <div
-            role="alert"
-            className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700"
-          >
-            {error}
-          </div>
-          <button
-            onClick={fetchCredential}
-            className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </main>
+      <PageLayout maxWidth="max-w-2xl">
+        <ErrorState message={error} onRetry={fetchCredential} />
+      </PageLayout>
     );
   }
 
   if (!credential) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
-        <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md text-center">
-          <p className="text-gray-600">Credential not found</p>
-        </div>
-      </main>
+      <PageLayout maxWidth="max-w-2xl">
+        <EmptyState message="Credential not found." />
+      </PageLayout>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-2xl space-y-6">
+    <PageLayout maxWidth="max-w-2xl">
+      <div className="space-y-6">
         {/* Header */}
-        <section className="rounded-lg bg-white p-6 shadow-md">
+        <section className="rounded-lg bg-white p-6 shadow-card">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-neutral-900">
                 Credential Verification
               </h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-neutral-600">
                 Token ID: {credential.tokenId}
               </p>
             </div>
-            <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
+            <span className="inline-flex items-center rounded-full bg-success-100 px-3 py-1 text-sm font-medium text-success-800">
               Verified
             </span>
           </div>
         </section>
 
         {/* Credential Details */}
-        <section className="rounded-lg bg-white p-6 shadow-md">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <section className="rounded-lg bg-white p-6 shadow-card">
+          <h2 className="text-lg font-semibold text-neutral-900">
             Credential Details
           </h2>
           <dl className="mt-4 space-y-4">
             <div>
-              <dt className="text-sm font-medium text-gray-500">
+              <dt className="text-sm font-medium text-neutral-600">
                 Credential Type
               </dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dd className="mt-1 text-sm text-neutral-900">
                 {credential.credentialType}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">
+              <dt className="text-sm font-medium text-neutral-600">
                 Issuer Address
               </dt>
-              <dd className="mt-1 text-sm text-gray-900 font-mono break-all">
+              <dd className="mt-1 text-sm text-neutral-900 font-mono break-all">
                 {credential.issuer}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">
+              <dt className="text-sm font-medium text-neutral-600">
                 Holder Address
               </dt>
-              <dd className="mt-1 text-sm text-gray-900 font-mono break-all">
+              <dd className="mt-1 text-sm text-neutral-900 font-mono break-all">
                 {credential.holder}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">
+              <dt className="text-sm font-medium text-neutral-600">
                 Issuance Date
               </dt>
-              <dd className="mt-1 text-sm text-gray-900">
+              <dd className="mt-1 text-sm text-neutral-900">
                 {credential.issuanceDate}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">
+              <dt className="text-sm font-medium text-neutral-600">
                 Verification Status
               </dt>
               <dd className="mt-1">
-                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                <span className="inline-flex items-center rounded-full bg-success-100 px-2.5 py-0.5 text-xs font-medium text-success-800">
                   Verified
                 </span>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-neutral-600">
                   This credential is recorded on-chain and is tamper-proof.
                 </p>
               </dd>
@@ -202,11 +215,11 @@ export default function CredentialVerificationPage() {
 
         {/* IPFS Document Link */}
         {credential.ipfsCID && (
-          <section className="rounded-lg bg-white p-6 shadow-md">
-            <h2 className="text-lg font-semibold text-gray-900">
+          <section className="rounded-lg bg-white p-6 shadow-card">
+            <h2 className="text-lg font-semibold text-neutral-900">
               Credential Document
             </h2>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-neutral-600">
               The original credential document is stored on IPFS for
               decentralized, permanent access.
             </p>
@@ -214,16 +227,16 @@ export default function CredentialVerificationPage() {
               href={`${IPFS_GATEWAY}/${credential.ipfsCID}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              className="mt-3 inline-flex items-center gap-2 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
             >
               View Document on IPFS
             </a>
-            <p className="mt-2 text-xs text-gray-400 font-mono break-all">
+            <p className="mt-2 text-xs text-neutral-400 font-mono break-all">
               CID: {credential.ipfsCID}
             </p>
           </section>
         )}
       </div>
-    </main>
+    </PageLayout>
   );
 }
