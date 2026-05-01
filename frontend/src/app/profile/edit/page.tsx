@@ -60,6 +60,7 @@ function ProfileEditContent() {
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [profileImageCid, setProfileImageCid] = useState<string | null>(null);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
 
   // Load current profile on mount
   const loadProfile = useCallback(async () => {
@@ -142,6 +143,10 @@ function ProfileEditContent() {
     const file = e.target.files?.[0];
     if (!file || !address || !jwt) return;
 
+    // Show local preview immediately
+    const previewUrl = URL.createObjectURL(file);
+    setLocalPreviewUrl(previewUrl);
+
     setSuccessMessage(null);
     setErrorMessage(null);
     setUploading(true);
@@ -149,8 +154,11 @@ function ProfileEditContent() {
     try {
       const updatedProfile = await uploadProfileImage(address, file, jwt);
       setProfileImageCid(updatedProfile.profile_image_cid);
+      setLocalPreviewUrl(null);
       setSuccessMessage("Profile image uploaded successfully");
     } catch (err: unknown) {
+      // Revert local preview on failure
+      setLocalPreviewUrl(null);
       if (err instanceof ApiRequestError) {
         setErrorMessage(err.message);
       } else if (err instanceof Error) {
@@ -174,6 +182,9 @@ function ProfileEditContent() {
   const profileImageUrl = profileImageCid
     ? `${IPFS_GATEWAY}/${profileImageCid}`
     : null;
+
+  // Use local preview during upload, fall back to IPFS URL
+  const displayImageUrl = localPreviewUrl || profileImageUrl;
 
   if (loading) {
     return (
@@ -221,9 +232,9 @@ function ProfileEditContent() {
           Profile Image
         </h2>
         <div className="mt-3 flex items-center gap-4">
-          {profileImageUrl ? (
+          {displayImageUrl ? (
             <img
-              src={profileImageUrl}
+              src={displayImageUrl}
               alt={profileImageAlt}
               className="h-20 w-20 rounded-full object-cover border-2 border-neutral-200"
             />

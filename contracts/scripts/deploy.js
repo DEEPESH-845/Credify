@@ -32,9 +32,15 @@ async function main() {
   const reputationTokenAddress = await reputationToken.getAddress();
   console.log("ReputationToken deployed to:", reputationTokenAddress);
 
+  // 3. Add deployer as an authorized issuer on CredentialNFT
+  console.log("Adding deployer as authorized issuer...");
+  const addIssuerTx = await credentialNFT.addIssuer(deployer.address);
+  await addIssuerTx.wait();
+  console.log("Deployer", deployer.address, "added as authorized issuer");
+
   console.log("---");
 
-  // 3. Write deployed addresses to shared config
+  // 4. Write deployed addresses to shared config
   const sharedConfig = {
     contracts: {
       credentialNFT: credentialNFTAddress,
