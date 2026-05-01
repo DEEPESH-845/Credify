@@ -17,19 +17,13 @@ export default function GlobalNav(): React.ReactElement | null {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Hide nav on login route
-  if (pathname === "/login") {
-    return null;
-  }
-
   const navLinks = useMemo(() => {
-    const links = [
+    return [
       { href: "/feed", label: "Feed" },
       { href: "/connections", label: "Connections" },
       { href: address ? `/profile/${address}` : "/profile", label: "Profile" },
       { href: "/issuer", label: "Issuer" },
     ];
-    return links;
   }, [address]);
 
   const activeHref = useMemo(() => {
@@ -71,8 +65,12 @@ export default function GlobalNav(): React.ReactElement | null {
     setMobileMenuOpen((prev) => !prev);
   }, []);
 
-  const showChainWarning =
-    chainId !== null && chainId !== EXPECTED_CHAIN_ID;
+  const showChainWarning = chainId !== null && chainId !== EXPECTED_CHAIN_ID;
+
+  // Hide nav on login route — AFTER all hooks
+  if (pathname === "/login") {
+    return null;
+  }
 
   return (
     <>

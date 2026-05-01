@@ -1,4 +1,5 @@
 /.kiro
+repomix-output.xml
 
 # Dependencies
 node_modules/

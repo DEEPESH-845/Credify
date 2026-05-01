@@ -6,6 +6,9 @@ const pool = new Pool({
   database: process.env.DB_NAME || "blockchain_social",
   user: process.env.DB_USER || "postgres",
   password: process.env.DB_PASSWORD || "postgres",
+  // Use connection string if provided (e.g. Neon, Supabase)
+  connectionString: process.env.DATABASE_URL || undefined,
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : undefined,
 });
 
 export default pool;
