@@ -72,6 +72,7 @@ describe("POST /api/connections/request", () => {
     const connection = makeConnection();
     mockedConnRepo.findExisting.mockResolvedValue(null);
     mockedConnRepo.create.mockResolvedValue(connection);
+    mockedUserRepo.findByAddress.mockResolvedValue(makeUser({ wallet_address: RECIPIENT_ADDRESS.toLowerCase() }));
 
     const res = await request(app)
       .post("/api/connections/request")

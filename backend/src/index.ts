@@ -1,7 +1,8 @@
 import express from "express";
+import helmet from "helmet";
 import { corsMiddleware } from "./middleware/cors";
 import { sanitizeMiddleware } from "./middleware/sanitize";
-import { authRateLimiter } from "./middleware/rateLimiter";
+import { authRateLimiter, globalRateLimiter, uploadRateLimiter } from "./middleware/rateLimiter";
 import { globalErrorHandler } from "./middleware/errorHandler";
 import { runMigrations } from "./migrations/run";
 import authRoutes from "./routes/auth";
@@ -16,8 +17,15 @@ const PORT = process.env.PORT || 3001;
 
 // CORS must be applied before other middleware so preflight requests are handled
 app.use(corsMiddleware);
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabled — frontend handles CSP
+  crossOriginEmbedderPolicy: false, // Allow cross-origin resources (IPFS images)
+}));
 app.use(express.json());
 app.use(sanitizeMiddleware);
+// Global rate limiting
+app.use(globalRateLimiter);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });

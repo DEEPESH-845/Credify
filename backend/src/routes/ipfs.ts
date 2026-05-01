@@ -1,6 +1,7 @@
 import { Router, Response } from "express";
 import multer from "multer";
 import { authMiddleware, AuthenticatedRequest } from "../middleware/auth";
+import { uploadRateLimiter } from "../middleware/rateLimiter";
 import {
   FileTooLargeError,
   UnsupportedFileTypeError,
@@ -31,6 +32,7 @@ const router = Router();
  */
 router.post(
   "/upload",
+  uploadRateLimiter,
   authMiddleware,
   (req: AuthenticatedRequest, res: Response, next) => {
     upload.single("file")(req, res, (err) => {

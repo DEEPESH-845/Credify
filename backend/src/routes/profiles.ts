@@ -1,6 +1,7 @@
 import { Router, Response } from "express";
 import multer from "multer";
 import { authMiddleware, AuthenticatedRequest } from "../middleware/auth";
+import { uploadRateLimiter } from "../middleware/rateLimiter";
 import { validate, validateQuery } from "../middleware/validate";
 import { createProfileSchema, updateProfileSchema, userSearchQuerySchema } from "../validators/schemas";
 import * as profileService from "../services/profileService";
@@ -169,6 +170,7 @@ router.put(
  */
 router.post(
   "/:address/image",
+  uploadRateLimiter,
   authMiddleware,
   (req: AuthenticatedRequest, res: Response, next) => {
     upload.single("image")(req, res, (err) => {

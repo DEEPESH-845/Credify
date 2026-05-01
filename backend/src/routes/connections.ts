@@ -40,6 +40,16 @@ router.post(
         return;
       }
 
+      if (err.code === "NOT_FOUND") {
+        res.status(404).json({
+          error: {
+            code: "NOT_FOUND",
+            message: err.message,
+          },
+        });
+        return;
+      }
+
       if (err.code === "VALIDATION_ERROR") {
         res.status(400).json({
           error: {

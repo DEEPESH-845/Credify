@@ -38,6 +38,14 @@ export async function sendRequest(
     throw error;
   }
 
+  // Verify recipient exists
+  const recipientUser = await userRepository.findByAddress(normalizedRecipient);
+  if (!recipientUser) {
+    const error = new Error("Recipient user not found");
+    (error as any).code = "NOT_FOUND";
+    throw error;
+  }
+
   return connectionRepository.create(normalizedRequester, normalizedRecipient);
 }
 

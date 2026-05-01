@@ -2,6 +2,7 @@ import express, { Express } from "express";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import ipfsRoutes from "../src/routes/ipfs";
+import { uploadRateLimiter } from "../src/middleware/rateLimiter";
 import {
   MAX_FILE_SIZE,
   ALLOWED_MIME_TYPES,
@@ -10,6 +11,21 @@ import {
 
 const JWT_SECRET = "dev-secret-change-in-production";
 const USER_ADDRESS = "0x1234567890abcdef1234567890abcdef12345678";
+
+/** Helper: create a buffer with valid JPEG magic bytes */
+function fakeJpeg(extra = "data"): Buffer {
+  return Buffer.concat([Buffer.from([0xFF, 0xD8, 0xFF]), Buffer.from(extra)]);
+}
+
+/** Helper: create a buffer with valid PNG magic bytes */
+function fakePng(extra = "data"): Buffer {
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4E, 0x47]), Buffer.from(extra)]);
+}
+
+/** Helper: create a buffer with valid PDF magic bytes */
+function fakePdf(extra = "data"): Buffer {
+  return Buffer.concat([Buffer.from([0x25, 0x50, 0x44, 0x46]), Buffer.from(extra)]);
+}
 
 function generateToken(address: string): string {
   return jwt.sign({ address: address.toLowerCase() }, JWT_SECRET);
@@ -29,13 +45,14 @@ describe("POST /api/ipfs/upload", () => {
   beforeEach(() => {
     app = createApp();
     _clearStore();
+    uploadRateLimiter.reset();
   });
 
   it("should upload a JPEG file and return a CID", async () => {
     const res = await request(app)
       .post("/api/ipfs/upload")
       .set("Authorization", `Bearer ${token}`)
-      .attach("file", Buffer.from("fake-jpeg-data"), {
+      .attach("file", fakeJpeg(), {
         filename: "photo.jpg",
         contentType: "image/jpeg",
       });
@@ -50,7 +67,7 @@ describe("POST /api/ipfs/upload", () => {
     const res = await request(app)
       .post("/api/ipfs/upload")
       .set("Authorization", `Bearer ${token}`)
-      .attach("file", Buffer.from("fake-png-data"), {
+      .attach("file", fakePng(), {
         filename: "image.png",
         contentType: "image/png",
       });
@@ -64,7 +81,7 @@ describe("POST /api/ipfs/upload", () => {
     const res = await request(app)
       .post("/api/ipfs/upload")
       .set("Authorization", `Bearer ${token}`)
-      .attach("file", Buffer.from("fake-pdf-data"), {
+      .attach("file", fakePdf(), {
         filename: "document.pdf",
         contentType: "application/pdf",
       });
@@ -103,7 +120,7 @@ describe("POST /api/ipfs/upload", () => {
   it("should return 401 without authentication", async () => {
     const res = await request(app)
       .post("/api/ipfs/upload")
-      .attach("file", Buffer.from("fake-jpeg-data"), {
+      .attach("file", fakeJpeg(), {
         filename: "photo.jpg",
         contentType: "image/jpeg",
       });
@@ -145,10 +162,11 @@ describe("GET /api/ipfs/:cid", () => {
   beforeEach(() => {
     app = createApp();
     _clearStore();
+    uploadRateLimiter.reset();
   });
 
   it("should retrieve a previously uploaded JPEG file", async () => {
-    const fileContent = Buffer.from("fake-jpeg-content");
+    const fileContent = fakeJpeg("jpeg-content");
 
     // Upload first
     const uploadRes = await request(app)
@@ -175,7 +193,7 @@ describe("GET /api/ipfs/:cid", () => {
   });
 
   it("should retrieve a previously uploaded PDF file", async () => {
-    const fileContent = Buffer.from("fake-pdf-content");
+    const fileContent = fakePdf("pdf-content");
 
     const uploadRes = await request(app)
       .post("/api/ipfs/upload")
@@ -228,10 +246,11 @@ describe("IPFS upload and retrieve round-trip", () => {
   beforeEach(() => {
     app = createApp();
     _clearStore();
+    uploadRateLimiter.reset();
   });
 
   it("should round-trip a JPEG file: upload then retrieve returns same content", async () => {
-    const originalContent = Buffer.from("round-trip-jpeg-test-data");
+    const originalContent = fakeJpeg("round-trip-jpeg-test-data");
 
     const uploadRes = await request(app)
       .post("/api/ipfs/upload")
@@ -262,7 +281,7 @@ describe("IPFS upload and retrieve round-trip", () => {
     const uploadRes1 = await request(app)
       .post("/api/ipfs/upload")
       .set("Authorization", `Bearer ${token}`)
-      .attach("file", Buffer.from("content-one"), {
+      .attach("file", fakeJpeg("content-one"), {
         filename: "a.jpg",
         contentType: "image/jpeg",
       });
@@ -270,7 +289,7 @@ describe("IPFS upload and retrieve round-trip", () => {
     const uploadRes2 = await request(app)
       .post("/api/ipfs/upload")
       .set("Authorization", `Bearer ${token}`)
-      .attach("file", Buffer.from("content-two"), {
+      .attach("file", fakeJpeg("content-two"), {
         filename: "b.jpg",
         contentType: "image/jpeg",
       });
@@ -281,7 +300,7 @@ describe("IPFS upload and retrieve round-trip", () => {
   });
 
   it("should return the same CID for identical file contents", async () => {
-    const content = Buffer.from("identical-content");
+    const content = fakeJpeg("identical-content");
 
     const uploadRes1 = await request(app)
       .post("/api/ipfs/upload")

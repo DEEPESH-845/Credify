@@ -73,6 +73,31 @@ function validateFile(buffer: Buffer, mimeType: string): void {
   if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
     throw new UnsupportedFileTypeError(ALLOWED_MIME_TYPES);
   }
+  validateFileSignature(buffer, mimeType);
+}
+
+/**
+ * Validate file content matches its declared MIME type by checking magic bytes.
+ */
+function validateFileSignature(buffer: Buffer, mimeType: string): void {
+  const signatures: Record<string, number[]> = {
+    "image/jpeg": [0xFF, 0xD8, 0xFF],
+    "image/png": [0x89, 0x50, 0x4E, 0x47],
+    "application/pdf": [0x25, 0x50, 0x44, 0x46], // %PDF
+  };
+
+  const expected = signatures[mimeType];
+  if (!expected) return; // Unknown type, skip validation
+
+  if (buffer.length < expected.length) {
+    throw new UnsupportedFileTypeError(ALLOWED_MIME_TYPES);
+  }
+
+  for (let i = 0; i < expected.length; i++) {
+    if (buffer[i] !== expected[i]) {
+      throw new UnsupportedFileTypeError(ALLOWED_MIME_TYPES);
+    }
+  }
 }
 
 function getExtension(mimeType: string): string {

@@ -1,18 +1,16 @@
 import { Request, Response, NextFunction } from "express";
+import xss from "xss";
 
 /**
- * Strips HTML tags from a string, including script/style element content.
- * Preserves the non-HTML text content.
+ * Sanitizes a string using the xss library to prevent XSS attacks.
+ * Strips all HTML tags and attributes.
  */
-export function stripHtmlTags(input: string): string {
-  // First remove <script>...</script> and <style>...</style> blocks entirely (including content)
-  let result = input.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
-  result = result.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "");
-
-  // Then strip all remaining HTML tags but keep their text content
-  result = result.replace(/<[^>]*>/g, "");
-
-  return result;
+export function sanitizeString(input: string): string {
+  return xss(input, {
+    whiteList: {},          // No tags allowed
+    stripIgnoreTag: true,   // Strip all tags not in whitelist
+    stripIgnoreTagBody: ["script", "style"], // Remove script/style content entirely
+  });
 }
 
 /**
@@ -21,7 +19,7 @@ export function stripHtmlTags(input: string): string {
  */
 export function sanitizeValue(value: unknown): unknown {
   if (typeof value === "string") {
-    return stripHtmlTags(value);
+    return sanitizeString(value);
   }
 
   if (Array.isArray(value)) {
@@ -55,4 +53,9 @@ export function sanitizeMiddleware(
   }
 
   next();
+}
+
+/** @deprecated Use sanitizeString instead */
+export function stripHtmlTags(input: string): string {
+  return sanitizeString(input);
 }

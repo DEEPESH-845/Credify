@@ -2,6 +2,7 @@ import express, { Express } from "express";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import { sanitizeMiddleware } from "../src/middleware/sanitize";
+import { uploadRateLimiter } from "../src/middleware/rateLimiter";
 import profileRoutes from "../src/routes/profiles";
 import * as userRepository from "../src/repositories/userRepository";
 import { User } from "../src/types/models";
@@ -418,6 +419,7 @@ describe("POST /api/profiles/:address/image", () => {
   beforeEach(() => {
     app = createApp();
     jest.clearAllMocks();
+    uploadRateLimiter.reset();
   });
 
   it("should upload a JPEG image and return the CID", async () => {

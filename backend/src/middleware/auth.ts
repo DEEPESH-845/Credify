@@ -3,6 +3,11 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-in-production";
 
+// Warn if using default secret in production
+if (JWT_SECRET === "dev-secret-change-in-production" && process.env.NODE_ENV === "production") {
+  console.error("⚠️  CRITICAL: JWT_SECRET is using the default value. Set a strong secret in production!");
+}
+
 export interface AuthenticatedRequest extends Request {
   user?: {
     address: string;

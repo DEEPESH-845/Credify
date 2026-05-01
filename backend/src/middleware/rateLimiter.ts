@@ -88,3 +88,15 @@ export const authRateLimiter = createRateLimiter({
   maxRequests: 10,
   windowMs: 15 * 60 * 1000,
 });
+
+/** Global rate limiter: 100 requests per minute per IP */
+export const globalRateLimiter = createRateLimiter({
+  maxRequests: 100,
+  windowMs: 60 * 1000,
+});
+
+/** Upload rate limiter: 10 uploads per 15 minutes per IP */
+export const uploadRateLimiter = createRateLimiter({
+  maxRequests: 10,
+  windowMs: 15 * 60 * 1000,
+});
