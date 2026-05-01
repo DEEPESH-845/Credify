@@ -115,11 +115,17 @@ export async function uploadToIPFS(
 
   if (isPinataConfigured()) {
     const pinata = getPinata();
-    const file = new File([buffer], `upload.${getExtension(mimeType)}`, {
-      type: mimeType,
-    });
-    const result = await pinata.upload.public.file(file);
-    return result.cid;
+    const fileName = `upload-${Date.now()}.${getExtension(mimeType)}`;
+    const blob = new Blob([buffer], { type: mimeType });
+    const file = new File([blob], fileName, { type: mimeType });
+
+    try {
+      const result = await pinata.upload.public.file(file);
+      return result.cid;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(`Pinata upload failed: ${message}`);
+    }
   }
 
   // Fallback: deterministic fake CID
@@ -180,6 +186,10 @@ export async function retrieveFromIPFS(
       if (data instanceof Blob) {
         const arrayBuffer = await data.arrayBuffer();
         buffer = Buffer.from(arrayBuffer);
+      } else if (Buffer.isBuffer(data)) {
+        buffer = data;
+      } else if (data instanceof ArrayBuffer) {
+        buffer = Buffer.from(data);
       } else if (typeof data === "string") {
         buffer = Buffer.from(data, "utf-8");
       } else {
@@ -188,7 +198,9 @@ export async function retrieveFromIPFS(
       }
 
       return { buffer, mimeType };
-    } catch {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`Pinata retrieval failed for CID ${cid}: ${message}`);
       throw new CIDNotFoundError(cid);
     }
   }
