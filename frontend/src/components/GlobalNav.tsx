@@ -21,7 +21,7 @@ export default function GlobalNav(): React.ReactElement | null {
     return [
       { href: "/feed", label: "Feed" },
       { href: "/connections", label: "Connections" },
-      { href: address ? `/profile/${address}` : "/profile", label: "Profile" },
+      { href: address ? `/profile/${address}` : "/feed", label: "Profile" },
       { href: "/issuer", label: "Issuer" },
     ];
   }, [address]);
