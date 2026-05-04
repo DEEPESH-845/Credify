@@ -13,7 +13,7 @@ import feedRoutes from "./routes/feed";
 import ipfsRoutes from "./routes/ipfs";
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(process.env.PORT || "3001", 10);
 
 // CORS must be applied before other middleware so preflight requests are handled
 app.use(corsMiddleware);
@@ -55,7 +55,7 @@ app.use(globalErrorHandler);
 // Run database migrations before starting the server
 runMigrations()
   .then(() => {
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       console.log(`Backend server running on port ${PORT}`);
     });
   })
